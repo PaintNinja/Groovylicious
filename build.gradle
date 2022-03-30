@@ -1,6 +1,5 @@
 plugins {
-    id 'net.minecraftforge.gradle' version '5.1.+'
-    id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
+    id 'dev.architectury.loom' version '0.11.0-SNAPSHOT'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'groovy'
 }
@@ -12,6 +11,20 @@ archivesBaseName = 'groovylicious'
 // Mojang ships Java 17 to end users in 1.18+, so your mod should target Java 17.
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
+println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
+
+loom {
+    silentMojangMappingsLicense()
+
+    forge {}
+
+    launches {
+        server {
+            arg '--nogui'
+        }
+    }
+}
+
 sourceSets {
     transform {
         groovy {
@@ -19,7 +32,8 @@ sourceSets {
         }
 
         resources.srcDirs = []
-        compileClasspath += configurations.getByName('minecraft')
+        //compileClasspath += configurations.getByName('minecraft')
+        compileClasspath += main.compileClasspath
     }
 
     main {
@@ -37,51 +51,15 @@ sourceSets {
     }
 }
 
-println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
-minecraft {
-    mappings channel: 'official', version: '1.18.2'
-
-    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg') // Currently, this location cannot be changed from the default.
-
-    runs {
-        configureEach {
-            workingDirectory project.file('run')
-            property 'forge.logging.console.level', 'info'
-
-            mods {
-                groovylicious {
-                    source sourceSets.main
-                }
-            }
-        }
-
-        client {}
-        server {
-            args '--nogui'
-        }
-    }
-}
-
-configurations {
-    library
-    implementation.extendsFrom library
-}
-
-minecraft.runs.all {
-    lazyToken('minecraft_classpath') {
-        configurations.library.copyRecursive().resolve().collect({ it.absolutePath }).join(File.pathSeparator)
-    }
-}
-
 // Groovylicious is written in pure Groovy, so delete the empty java folder in each of the sourceSets
 sourceSets.each { sourceSet ->
-    final javaDir = new File("src/${sourceSet.name}/java/")
+    final javaDir = file("src/${sourceSet.name}/java/")
     javaDir.deleteDir()
 }
 // let's also delete the unused generated and test folders while we're at it
-final generatedDir = new File("src/generated/")
+final generatedDir = file("src/generated/")
 generatedDir.deleteDir()
-final testDir = new File("src/test/")
+final testDir = file("src/test/")
 testDir.deleteDir()
 
 repositories {
@@ -99,33 +77,45 @@ repositories {
 }
 
 dependencies {
-    // Forge
-    minecraft 'net.minecraftforge:forge:1.18.2-40.0.32'
+    minecraft 'com.mojang:minecraft:1.18.2'
+
+    mappings loom.officialMojangMappings()
+
+    forge 'net.minecraftforge:forge:1.18.2-40.0.32'
 
     // Austin's Powerful Language Provider: Keeping it Groovy, baby!
     implementation 'net.thesilkminer.mc.austin:aplp-1.18.2:1.0.1'
     transformImplementation 'net.thesilkminer.mc.austin:aplp-1.18.2:1.0.1'
 
     // Add Groovy to the game
-    library 'org.apache.groovy:groovy:4.0.1'
-    library 'org.apache.groovy:groovy-macro:4.0.1'
-    library 'org.apache.groovy:groovy-macro-library:4.0.1'
-    library 'org.apache.groovy:groovy-templates:4.0.1'
-    library 'org.apache.groovy:groovy-typecheckers:4.0.1'
-    library 'org.apache.groovy:groovy-groovydoc:4.0.1'
+    modImplementation 'org.apache.groovy:groovy:4.0.1'
+    modImplementation 'org.apache.groovy:groovy-macro:4.0.1'
+    modImplementation 'org.apache.groovy:groovy-macro-library:4.0.1'
+    modImplementation 'org.apache.groovy:groovy-templates:4.0.1'
+    modImplementation 'org.apache.groovy:groovy-typecheckers:4.0.1'
+    modImplementation 'org.apache.groovy:groovy-groovydoc:4.0.1'
 
     // LazyDFU in dev env - speeds up initial load times at the cost of lag spikes in-game,
     // fine for me as Groovylicious doesn't add any in-game APIs yet
-    runtimeOnly fg.deobf('curse.maven:lazydfu-460819:3544496')
+    modRuntimeOnly 'curse.maven:lazydfu-460819:3544496'
 
     // Ksyxis in dev env - speeds up initial server load times by lazy loading spawn chunks at
     // the cost of lag on the server when someone joins from previously empty - fine for me as
     // Groovylicious doesn't add any in-game APIs yet
-    runtimeOnly fg.deobf('curse.maven:ksyxis-537533:3502166')
+    modRuntimeOnly 'curse.maven:ksyxis-537533:3502166'
 }
 
 processResources {
     duplicatesStrategy DuplicatesStrategy.EXCLUDE
+
+    // define properties that can be used during resource processing
+//    inputs.property 'version', project.version
+
+    // this will replace the property "${version}" in your mods.toml
+    // with the version you've defined in your gradle.properties
+//    filesMatching('META-INF/mods.toml') {
+//        expand 'version': project.version
+//    }
 }
 
 jar {
@@ -151,8 +141,6 @@ tasks.withType(GroovyCompile).configureEach { GroovyCompile task ->
     task.groovyOptions.fork = true
     task.groovyOptions.encoding = 'UTF-8'
 }
-
-mixin {}
 
 compileGroovy.groovyOptions.configurationScript = file('src/transform/groovy/ga/ozli/minecraftmods/groovylicious/transform/groovycConfig.groovy')
 compileGroovy.groovyOptions.optimizationOptions."groovydoc" = true
