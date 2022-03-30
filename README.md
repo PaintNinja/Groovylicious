@@ -21,6 +21,7 @@ The config class:
 ```groovy
 @ModConfig(modId = 'groovylicious')
 static class Config {
+    
     /** How fast do you need to drive to accomplish time travel? {@range 50..100} */
     static int timeTravelMph = 88
 

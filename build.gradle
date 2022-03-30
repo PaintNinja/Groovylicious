@@ -1,6 +1,5 @@
 plugins {
     id 'dev.architectury.loom' version '0.11.0-SNAPSHOT'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'groovy'
 }
 
@@ -18,6 +17,9 @@ loom {
 
     forge {}
 
+    // known issue: ArchitecturyLoom wrongly excludes BootstrapLauncher (BSL), causing it to crash and burn. :(
+    // workaround: manually remove the exclusion for BSL from the "Minecraft Server" run configuration
+    // https://github.com/architectury/architectury-loom/issues/73
     launches {
         server {
             arg '--nogui'
@@ -32,7 +34,6 @@ sourceSets {
         }
 
         resources.srcDirs = []
-        //compileClasspath += configurations.getByName('minecraft')
         compileClasspath += main.compileClasspath
     }
 
@@ -88,12 +89,12 @@ dependencies {
     transformImplementation 'net.thesilkminer.mc.austin:aplp-1.18.2:1.0.1'
 
     // Add Groovy to the game
-    modImplementation 'org.apache.groovy:groovy:4.0.1'
-    modImplementation 'org.apache.groovy:groovy-macro:4.0.1'
-    modImplementation 'org.apache.groovy:groovy-macro-library:4.0.1'
-    modImplementation 'org.apache.groovy:groovy-templates:4.0.1'
-    modImplementation 'org.apache.groovy:groovy-typecheckers:4.0.1'
-    modImplementation 'org.apache.groovy:groovy-groovydoc:4.0.1'
+    implementation forgeDependencies('org.apache.groovy:groovy:4.0.1')
+    implementation forgeDependencies('org.apache.groovy:groovy-macro:4.0.1')
+    implementation forgeDependencies('org.apache.groovy:groovy-macro-library:4.0.1')
+    implementation forgeDependencies('org.apache.groovy:groovy-templates:4.0.1')
+    implementation forgeDependencies('org.apache.groovy:groovy-typecheckers:4.0.1')
+    implementation forgeDependencies('org.apache.groovy:groovy-groovydoc:4.0.1')
 
     // LazyDFU in dev env - speeds up initial load times at the cost of lag spikes in-game,
     // fine for me as Groovylicious doesn't add any in-game APIs yet
@@ -107,15 +108,6 @@ dependencies {
 
 processResources {
     duplicatesStrategy DuplicatesStrategy.EXCLUDE
-
-    // define properties that can be used during resource processing
-//    inputs.property 'version', project.version
-
-    // this will replace the property "${version}" in your mods.toml
-    // with the version you've defined in your gradle.properties
-//    filesMatching('META-INF/mods.toml') {
-//        expand 'version': project.version
-//    }
 }
 
 jar {
