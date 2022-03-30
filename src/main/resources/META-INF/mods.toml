@@ -1,0 +1,27 @@
+modLoader="aplp"
+loaderVersion="[1,)"
+license="MIT"
+
+[[mods]]
+    modId="groovylicious"
+    version="${file.jarVersion}"
+    displayName="Groovylicious"
+    logoFile="logo.png"
+    authors="Paint_Ninja"
+    description='''
+    Delicious syntax sugar with the power of Groovy!
+    '''
+
+[[dependencies.groovylicious]]
+    modId="forge"
+    mandatory=true
+    versionRange="[40.0.32,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.groovylicious]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.18.2,1.19)"
+    ordering="NONE"
+    side="BOTH"
