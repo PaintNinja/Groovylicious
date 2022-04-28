@@ -82,7 +82,7 @@ dependencies {
 
     mappings loom.officialMojangMappings()
 
-    forge 'net.minecraftforge:forge:1.18.2-40.0.32'
+    forge 'net.minecraftforge:forge:1.18.2-40.1.0'
 
     // Austin's Powerful Language Provider: Keeping it Groovy, baby!
     implementation 'net.thesilkminer.mc.austin:aplp-1.18.2:1.0.1'
