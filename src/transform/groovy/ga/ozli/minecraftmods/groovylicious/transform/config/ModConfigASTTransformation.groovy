@@ -16,6 +16,7 @@ import org.codehaus.groovy.control.CompilePhase
 import org.codehaus.groovy.control.SourceUnit
 import org.codehaus.groovy.transform.AbstractASTTransformation
 import org.codehaus.groovy.transform.GroovyASTTransformation
+import org.lwjgl.system.CallbackI
 
 import java.util.regex.Matcher
 
@@ -48,11 +49,29 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
         if (annotationValue !== null)
             modConfigType = (annotationValue.property as ConstantExpression).value as ModConfig.Type
 
-        // todo: support variables for modId
         // try to grab the modId from the config annotation to determine the modId to use in the generated config's filename
-        final annotationModId = configAnnotation.getMember('modId') as ConstantExpression
-        if (annotationModId !== null)
-            modId = annotationModId.value as String
+        def annotationModId = configAnnotation.getMember('modId')
+        try {
+            // try interpreting the modId as a direct String first
+            annotationModId = annotationModId as ConstantExpression
+            if (annotationModId !== null) {
+                modId = annotationModId.value as String
+                if (modId === null) {
+                    addError("modId cannot be null", annotationModId)
+                    return
+                }
+            }
+        } catch (ClassCastException e) {
+            // if that fails, try interpreting the modId as a variable that points to a String
+            annotationModId = annotationModId as VariableExpression
+            if (annotationModId !== null) {
+                modId = (annotationModId.accessedVariable.initialExpression as ConstantExpression)?.value?.asType(String)
+                if (modId === null) {
+                    addError("modId variable cannot be null", annotationModId)
+                    return
+                }
+            }
+        }
 
         if (!(targetClass instanceof ClassNode))
             throw new GroovyBugError("Class annotation ${configAnnotation.getClassNode().getName()} annotated no Class, this must not happen.")
