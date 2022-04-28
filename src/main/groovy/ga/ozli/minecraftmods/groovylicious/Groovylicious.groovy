@@ -15,7 +15,7 @@ class Groovylicious {
         Config.init()
     }
 
-    @ModConfig(modId = MOD_ID)
+    @ModConfig
     static class Config {
         // This is optional:
         //static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()

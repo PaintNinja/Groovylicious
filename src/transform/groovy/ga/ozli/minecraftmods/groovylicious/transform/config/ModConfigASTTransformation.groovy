@@ -16,7 +16,6 @@ import org.codehaus.groovy.control.CompilePhase
 import org.codehaus.groovy.control.SourceUnit
 import org.codehaus.groovy.transform.AbstractASTTransformation
 import org.codehaus.groovy.transform.GroovyASTTransformation
-import org.lwjgl.system.CallbackI
 
 import java.util.regex.Matcher
 
@@ -27,7 +26,7 @@ import static org.objectweb.asm.Opcodes.*
 class ModConfigASTTransformation extends AbstractASTTransformation {
 
     static ModConfig.Type modConfigType = ModConfig.Type.COMMON
-    static String modId = 'unknown'
+    static String modId = '$unknown'
 
     static ConstantExpression getPropertyValueOrDefault(PropertyNode property) {
         if ((property.type == ClassHelper.STRING_TYPE || property.type == ClassHelper.GSTRING_TYPE) && property.field.initialValueExpression === null) {
@@ -446,7 +445,29 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                                                 modConfigType.name()
                                         ),
                                         new VariableExpression('$configSpec'),
-                                        new ConstantExpression(modId.toLowerCase() + '-' + modConfigType.name().toLowerCase() + '.toml')
+
+                                        modId == '$unknown' ? new GStringExpression(
+                                                // if the modId is missing from the config annotation, use the class' module name to determine the modId
+                                                '',
+                                                [
+                                                        new ConstantExpression(''),
+                                                        new ConstantExpression('-' + modConfigType.name().toLowerCase() + '.toml')
+                                                ],
+                                                [
+                                                        new MethodCallExpression(
+                                                                new MethodCallExpression(
+                                                                        VariableExpression.THIS_EXPRESSION,
+                                                                        new ConstantExpression('getModule'),
+                                                                        ArgumentListExpression.EMPTY_ARGUMENTS
+                                                                ),
+                                                                new ConstantExpression('getName'),
+                                                                ArgumentListExpression.EMPTY_ARGUMENTS
+                                                        ) as Expression
+                                                ]
+                                        ) : new ConstantExpression(
+                                                // the modId is defined in the config annotation, so let's use it
+                                                modId.toLowerCase() + '-' + modConfigType.name().toLowerCase() + '.toml'
+                                        )
                                 )
                         )
                 ) as Statement
