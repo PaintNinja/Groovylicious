@@ -1,24 +1,73 @@
 package ga.ozli.minecraftmods.groovylicious
 
-import ga.ozli.minecraftmods.groovylicious.transform.ModConfig
+import ga.ozli.minecraftmods.groovylicious.api.gui.colours.Colour
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
-import groovy.util.logging.Log4j2
+import net.minecraftforge.common.ForgeConfigSpec
 import net.thesilkminer.mc.austin.api.Mod
 
-@CompileStatic
+import static ga.ozli.minecraftmods.groovylicious.api.gui.colours.ColoursRegistry.instance as Colours
+
+@CompileStatic//(extensions = ['ga.ozli.minecraftmods.groovylicious.transform.typecheckers.ColourTypeChecker'])
 @Mod(MOD_ID)
 class Groovylicious {
     @PackageScope static final String MOD_ID = "groovylicious"
 
     Groovylicious() {
-        Config.init()
+//        Config.init()
+//        AstBuilder builder = new AstBuilder()
+//        List<ASTNode> nodes = builder.buildFromString('println "${this.getModule().getName()}-common.toml"')
+//        nodes.each {
+//            println SV(it)
+//        }
+        testColoursAPI()
+        println ''
     }
 
-    @ModConfig
+    @CompileStatic
+    static void testColoursAPI() {
+        println Colours.WHITE
+        Colours.MAGENTA = new Colour(255, 0, 255)
+        println Colours.MAGENTA
+        Colours.define("Groovy_Blue", new Colour(red: 53, green: 122, blue: 147))
+        println Colours.GROOVY_BLUE
+
+        Colour orange = Colour.of(255, 165, 0)
+        println orange
+        println ""
+
+//        Colours.MyOtherClass.metaClass.someAPI = { i ->
+//            delegate.someAPI(i as Integer)
+//        }
+//        Colours.MyOtherClass.someAPI(Colours.MyClass)
+//
+//        Dsl.coloursDsl.alpha
+
+//        println Colours.White.alpha
+//        println Colours.White
+
+//        ColoursNew.define("magenta", 255, 0, 255)
+//        println ColoursNew.Magenta
+
+//        // what I have
+//        println ColoursNew.WHITE.argb
+//        println ColoursNew.White
+
+        //ArrayList<Integer> list = List.of(1, 2, 3)
+
+//        println Colours.White
+//        println Colours.White as int
+//        println Colours.White.packed
+//        println Colours.White.argb
+
+
+    }
+
+//    @ModConfig
     static class Config {
         // This is optional:
-        //static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()
+        static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()
+        static ForgeConfigSpec.LongValue test = myBuilder.defineInRange('test', 0L, Long.MIN_VALUE, Long.MAX_VALUE)
 
         /** How fast do you need to drive to accomplish time travel? {@range 50..100} */
         static int timeTravelMph = 88

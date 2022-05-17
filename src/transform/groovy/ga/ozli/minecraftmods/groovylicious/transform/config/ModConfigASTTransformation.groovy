@@ -32,7 +32,7 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
         if ((property.type == ClassHelper.STRING_TYPE || property.type == ClassHelper.GSTRING_TYPE) && property.field.initialValueExpression === null) {
             return ConstantExpression.EMPTY_STRING
         } else {
-            return new ConstantExpression((property.field.initialValueExpression as ConstantExpression)?.value?.asType(property.type.typeClass) ?: 0.asType(property.type.typeClass))
+            return new ConstantExpression((property.field.initialValueExpression as ConstantExpression)?.value?.asType(property.type.typeClass) ?: 0.asType(property.type.typeClass), true)
         }
     }
 
