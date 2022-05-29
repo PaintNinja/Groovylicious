@@ -37,7 +37,7 @@ import net.minecraft.util.FastColor
  * }
  * </pre>
  *
- * @see {@link Colours}
+ * @see {@link ColoursRegistry}
  *
  * @author Paint_Ninja
  */

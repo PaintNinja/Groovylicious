@@ -1,13 +1,12 @@
 package ga.ozli.minecraftmods.groovylicious
 
 import ga.ozli.minecraftmods.groovylicious.api.gui.Colour
-
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import net.minecraftforge.common.ForgeConfigSpec
 import net.thesilkminer.mc.austin.api.Mod
 
-import static ga.ozli.minecraftmods.groovylicious.api.gui.Colours.instance as Colours
+import static ga.ozli.minecraftmods.groovylicious.api.gui.ColoursRegistry.instance as Colours
 
 @CompileStatic//(extensions = ['ga.ozli.minecraftmods.groovylicious.transform.typecheckers.ColourTypeChecker'])
 @Mod(MOD_ID)
@@ -21,8 +20,8 @@ class Groovylicious {
 //        nodes.each {
 //            println SV(it)
 //        }
-        testColoursAPI()
-        println ''
+//        testColoursAPI()
+//        println ''
     }
 
     @CompileStatic

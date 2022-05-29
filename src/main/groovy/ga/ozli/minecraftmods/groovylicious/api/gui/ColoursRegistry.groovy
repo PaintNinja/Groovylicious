@@ -4,6 +4,7 @@ import groovy.transform.AutoFinal
 import groovy.transform.CompileStatic
 import groovy.transform.stc.POJO
 import net.minecraft.ChatFormatting
+import org.apache.groovy.lang.annotation.Incubating
 import org.jetbrains.annotations.NotNull
 
 import java.util.regex.Pattern
@@ -15,7 +16,7 @@ import java.util.regex.Pattern
  * Usage:
  * <pre>
  * {@code
- * import static ga.ozli.minecraftmods.groovylicious.api.gui.Colours.instance as Colours
+ * import static ga.ozli.minecraftmods.groovylicious.api.gui.ColoursRegistry.instance as Colours
  *
  * Colours.WHITE // returns the Colour WHITE
  * Colours.SUBTITLE.alpha // returns the alpha channel of the Colour SUBTITLE
@@ -42,7 +43,7 @@ import java.util.regex.Pattern
 @AutoFinal
 @POJO
 @CompileStatic
-class Colours implements Map<String, Colour> {
+class ColoursRegistry implements Map<String, Colour> {
 
     // Used by Vanilla GUIs
     Colour WHITE = new Colour(ChatFormatting.WHITE)
@@ -89,13 +90,15 @@ class Colours implements Map<String, Colour> {
     }
 
     // Singleton
-    public static final Colours instance = new Colours()
+    public static final ColoursRegistry instance = new ColoursRegistry()
 
     // Custom handling for colour names in the backing map to use case-standard names (e.g. "RED" instead of "red")
+    // todo: fix broken case-sensitivity
     @Override
     Colour get(Object key) {
-        if (key instanceof String) backingMap.get(toScreamingSnakeCase(key as String))
-        else return backingMap.get(key)
+//        if (key instanceof String) backingMap.get(toScreamingSnakeCase(key as String))
+//        else return backingMap.get(key)
+        return backingMap.get(key)
     }
 
     @Override
