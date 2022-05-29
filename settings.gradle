@@ -23,3 +23,6 @@ pluginManagement {
         }
     }
 }
+enableFeaturePreview('GROOVY_COMPILATION_AVOIDANCE')
+
+rootProject.name = 'Groovylicious'

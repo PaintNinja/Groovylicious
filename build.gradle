@@ -1,5 +1,5 @@
 plugins {
-    id 'dev.architectury.loom' version '0.11.0-SNAPSHOT'
+    id 'dev.architectury.loom' version '0.12.0-SNAPSHOT'
     id 'groovy'
 }
 
@@ -15,11 +15,12 @@ println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty '
 loom {
     silentMojangMappingsLicense()
 
-    forge {}
+    forge {
+//        mixinConfigs = [
+//                "groovylicious.mixins.json"
+//        ]
+    }
 
-    // known issue: ArchitecturyLoom wrongly excludes BootstrapLauncher (BSL), causing it to crash and burn. :(
-    // workaround: manually remove the exclusion for BSL from the "Minecraft Server" run configuration
-    // https://github.com/architectury/architectury-loom/issues/73
     launches {
         server {
             arg '--nogui'
@@ -75,14 +76,21 @@ repositories {
         name 'BlameJared'
         url 'https://maven.blamejared.com'
     }
+    maven {
+        name 'ParchmentMC'
+        url 'https://maven.parchmentmc.org'
+    }
 }
 
 dependencies {
     minecraft 'com.mojang:minecraft:1.18.2'
 
-    mappings loom.officialMojangMappings()
+    mappings loom.layered() {
+        officialMojangMappings()
+        parchment 'org.parchmentmc.data:parchment-1.18.2:2022.05.22@zip'
+    }
 
-    forge 'net.minecraftforge:forge:1.18.2-40.1.0'
+    forge 'net.minecraftforge:forge:1.18.2-40.1.25'
 
     // Austin's Powerful Language Provider: Keeping it Groovy, baby!
     implementation 'net.thesilkminer.mc.austin:aplp-1.18.2:1.0.1'
