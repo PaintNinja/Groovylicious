@@ -1,6 +1,5 @@
 package ga.ozli.minecraftmods.groovylicious.dsl
 
-
 import ga.ozli.minecraftmods.groovylicious.api.StringUtils
 import ga.ozli.minecraftmods.groovylicious.api.gui.ExtensibleScreen
 import groovy.transform.CompileStatic
@@ -28,17 +27,28 @@ class ScreenBuilder {
     void button(@DelegatesTo(value = ButtonBuilder, strategy = DELEGATE_FIRST)
                 @ClosureParams(value = SimpleType, options = "ga.ozli.minecraftmods.groovylicious.dsl.ButtonBuilder") final Closure closure) {
         final buttonBuilder = new ButtonBuilder()
-        closure.setDelegate(buttonBuilder)
+        closure.delegate = buttonBuilder
+        closure.resolveStrategy = DELEGATE_FIRST
         closure.call(buttonBuilder)
-        this.backingScreen.onInit << { ExtensibleScreen screenInstance -> screenInstance.addRenderableWidget(buttonBuilder.build()) }
+        this.backingScreen.onInit << buttonBuilder.buildClosure()
     }
 
     void label(@DelegatesTo(value = LabelBuilder, strategy = DELEGATE_FIRST)
                @ClosureParams(value = SimpleType, options = "ga.ozli.minecraftmods.groovylicious.dsl.LabelBuilder") final Closure closure) {
-        final LabelBuilder label = new LabelBuilder()
-        closure.setDelegate(label)
-        closure.call(label)
-        this.backingScreen.onRender << label.buildClosure()
+        final labelBuilder = new LabelBuilder()
+        closure.delegate = labelBuilder
+        closure.resolveStrategy = DELEGATE_FIRST
+        closure.call(labelBuilder)
+        this.backingScreen.onRender << labelBuilder.buildClosure()
+    }
+
+    void editBox(@DelegatesTo(value = EditBoxBuilder, strategy = DELEGATE_FIRST)
+                 @ClosureParams(value = SimpleType, options = "ga.ozli.minecraftmods.groovylicious.dsl.EditBoxBuilder") final Closure closure) {
+        final editBoxBuilder = new EditBoxBuilder()
+        closure.delegate = editBoxBuilder
+        closure.resolveStrategy = DELEGATE_FIRST
+        closure.call(editBoxBuilder)
+        this.backingScreen.onInit << editBoxBuilder.buildClosure()
     }
 
     ExtensibleScreen build() {

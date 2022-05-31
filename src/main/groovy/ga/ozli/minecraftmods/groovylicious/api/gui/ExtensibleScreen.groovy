@@ -3,21 +3,12 @@ package ga.ozli.minecraftmods.groovylicious.api.gui
 import com.mojang.blaze3d.vertex.PoseStack
 import ga.ozli.minecraftmods.groovylicious.api.StringUtils
 import groovy.transform.CompileStatic
-import groovy.transform.TupleConstructor
-import groovy.transform.stc.ClosureParams
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.components.Widget
 import net.minecraft.client.gui.components.events.GuiEventListener
 import net.minecraft.client.gui.narration.NarratableEntry
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
-import net.minecraft.network.chat.TextComponent
-import net.minecraft.network.chat.TranslatableComponent
-import org.intellij.lang.annotations.Language
-
-import javax.management.openmbean.SimpleType
-
-import static groovy.lang.Closure.DELEGATE_FIRST
 
 @CompileStatic
 class ExtensibleScreen extends Screen {
@@ -43,18 +34,18 @@ class ExtensibleScreen extends Screen {
     // --- Screen overrides ---
     @Override
     void init() {
-        if (!onPreInit.isEmpty()) onPreInit.each { it.call(screenInstance: this) }
-        onInit.each { it.call(screenInstance: this) }
-        if (!onPostInit.isEmpty()) onPostInit.each { it.call(screenInstance: this) }
+        if (!onPreInit.isEmpty()) onPreInit.each { it.call(this) }
+        onInit.each { it.call(this) }
+        if (!onPostInit.isEmpty()) onPostInit.each { it.call(this) }
     }
 
     @Override
     void render(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
-        if (!onPreRender.isEmpty()) onPreRender.each { it.call(screenInstance: this, poseStack: poseStack) }
+        if (!onPreRender.isEmpty()) onPreRender.each { it.call(this, poseStack) }
         if (drawBackground) this.renderBackground(poseStack)
-        onRender.each { it.call(screenInstance: this, poseStack: poseStack) }
+        onRender.each { it.call(this, poseStack) }
         super.render(poseStack, mouseX, mouseY, partialTick)
-        if (!onPostRender.isEmpty()) onPostRender.each {it.call(screenInstance: this, poseStack: poseStack) }
+        if (!onPostRender.isEmpty()) onPostRender.each {it.call(this, poseStack) }
     }
 
     // --- Access widening ---

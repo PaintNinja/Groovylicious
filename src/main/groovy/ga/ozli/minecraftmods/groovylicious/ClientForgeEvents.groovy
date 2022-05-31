@@ -1,13 +1,9 @@
 package ga.ozli.minecraftmods.groovylicious
 
-import ga.ozli.minecraftmods.groovylicious.api.gui.ExtensibleScreen
-import ga.ozli.minecraftmods.groovylicious.dsl.ButtonBuilder
 import ga.ozli.minecraftmods.groovylicious.dsl.ScreenBuilder
 import groovy.transform.CompileStatic
-import net.minecraft.client.gui.components.Button
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.TitleScreen
-import net.minecraft.network.chat.TextComponent
 import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.client.event.ScreenOpenEvent
 import net.minecraftforge.eventbus.api.SubscribeEvent
@@ -42,7 +38,7 @@ class ClientForgeEvents {
             drawBackground = true
 
             button {
-                text "Test button"
+                //text "Test button"
                 position x: 10,
                          y: 10
 
@@ -57,7 +53,13 @@ class ClientForgeEvents {
             label {
                 text "Lorem ipsum"
                 position x: 10, y: 40
-                colour Colours.AQUA
+                textColour Colours.AQUA
+            }
+
+            editBox {
+                text "Edit me!"
+                position x: 10, y: 60
+                size width: 100, height: 20
             }
         }
 

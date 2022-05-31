@@ -115,6 +115,7 @@ dependencies {
     library 'org.apache.groovy:groovy-templates:4.0.1'
     library 'org.apache.groovy:groovy-typecheckers:4.0.1'
     library 'org.apache.groovy:groovy-groovydoc:4.0.1'
+    library 'org.apache.groovy:groovy-contracts:4.0.1'
 
     // LazyDFU in dev env - speeds up initial load times at the cost of lag spikes in-game,
     // fine for me as Groovylicious doesn't add any in-game APIs yet
