@@ -1,7 +1,14 @@
+buildscript {
+    dependencies {
+        classpath 'org.parchmentmc:librarian:1.+'
+    }
+}
 plugins {
-    id 'dev.architectury.loom' version '0.12.0-SNAPSHOT'
+    id 'net.minecraftforge.gradle' version '5.1.+'
+    id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
     id 'groovy'
 }
+apply plugin: 'org.parchmentmc.librarian.forgegradle'
 
 version = '1.18.2-0.1.0'
 group = 'ga.ozli.minecraftmods.groovylicious'
@@ -12,19 +19,34 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 
-loom {
-    silentMojangMappingsLicense()
+minecraft {
+    mappings channel: 'parchment', version: '2022.05.22-1.18.2'
 
-    forge {
-//        mixinConfigs = [
-//                "groovylicious.mixins.json"
-//        ]
-    }
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'info'
 
-    launches {
-        server {
-            arg '--nogui'
+            mods {
+                groovylicious {
+                    source sourceSets.main
+                }
+            }
         }
+
+        client {}
+        server { args '--nogui' }
+    }
+}
+
+configurations {
+    library
+    implementation.extendsFrom library
+}
+
+minecraft.runs.all {
+    lazyToken('minecraft_classpath') {
+        configurations.library.copyRecursive().resolve().collect({ it.absolutePath }).join(File.pathSeparator)
     }
 }
 
@@ -35,7 +57,7 @@ sourceSets {
         }
 
         resources.srcDirs = []
-        compileClasspath += main.compileClasspath
+        compileClasspath += configurations.getByName('minecraft')
     }
 
     main {
@@ -76,42 +98,32 @@ repositories {
         name 'BlameJared'
         url 'https://maven.blamejared.com'
     }
-    maven {
-        name 'ParchmentMC'
-        url 'https://maven.parchmentmc.org'
-    }
 }
 
 dependencies {
-    minecraft 'com.mojang:minecraft:1.18.2'
-
-    mappings loom.layered() {
-        officialMojangMappings()
-        parchment 'org.parchmentmc.data:parchment-1.18.2:2022.05.22@zip'
-    }
-
-    forge 'net.minecraftforge:forge:1.18.2-40.1.25'
+    // Forge
+    minecraft 'net.minecraftforge:forge:1.18.2-40.1.25'
 
     // Austin's Powerful Language Provider: Keeping it Groovy, baby!
     implementation 'net.thesilkminer.mc.austin:aplp-1.18.2:1.0.1'
     transformImplementation 'net.thesilkminer.mc.austin:aplp-1.18.2:1.0.1'
 
     // Add Groovy to the game
-    implementation forgeDependencies('org.apache.groovy:groovy:4.0.1')
-    implementation forgeDependencies('org.apache.groovy:groovy-macro:4.0.1')
-    implementation forgeDependencies('org.apache.groovy:groovy-macro-library:4.0.1')
-    implementation forgeDependencies('org.apache.groovy:groovy-templates:4.0.1')
-    implementation forgeDependencies('org.apache.groovy:groovy-typecheckers:4.0.1')
-    implementation forgeDependencies('org.apache.groovy:groovy-groovydoc:4.0.1')
+    library 'org.apache.groovy:groovy:4.0.1'
+    library 'org.apache.groovy:groovy-macro:4.0.1'
+    library 'org.apache.groovy:groovy-macro-library:4.0.1'
+    library 'org.apache.groovy:groovy-templates:4.0.1'
+    library 'org.apache.groovy:groovy-typecheckers:4.0.1'
+    library 'org.apache.groovy:groovy-groovydoc:4.0.1'
 
     // LazyDFU in dev env - speeds up initial load times at the cost of lag spikes in-game,
     // fine for me as Groovylicious doesn't add any in-game APIs yet
-    modRuntimeOnly 'curse.maven:lazydfu-460819:3544496'
+    runtimeOnly 'curse.maven:lazydfu-460819:3544496'
 
     // Ksyxis in dev env - speeds up initial server load times by lazy loading spawn chunks at
     // the cost of lag on the server when someone joins from previously empty - fine for me as
     // Groovylicious doesn't add any in-game APIs yet
-    modRuntimeOnly 'curse.maven:ksyxis-537533:3502166'
+    runtimeOnly 'curse.maven:ksyxis-537533:3502166'
 }
 
 processResources {
@@ -122,7 +134,7 @@ jar {
     from sourceSets.transform.output
     from sourceSets.main.output
 
-    manifest({
+    manifest {
         attributes([
                 'Specification-Title': 'Groovylicious',
                 'Specification-Vendor': 'Paint_Ninja',
@@ -132,7 +144,7 @@ jar {
                 'Implementation-Vendor': 'Paint_Ninja',
                 'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
-    })
+    }
 
     finalizedBy 'reobfJar'
 }
@@ -143,4 +155,4 @@ tasks.withType(GroovyCompile).configureEach { GroovyCompile task ->
 }
 
 compileGroovy.groovyOptions.configurationScript = file('src/transform/groovy/ga/ozli/minecraftmods/groovylicious/transform/groovycConfig.groovy')
-compileGroovy.groovyOptions.optimizationOptions."groovydoc" = true
+compileGroovy.groovyOptions.optimizationOptions.'groovydoc' = true
