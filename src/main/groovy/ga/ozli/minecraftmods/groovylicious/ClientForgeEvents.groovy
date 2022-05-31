@@ -1,10 +1,13 @@
 package ga.ozli.minecraftmods.groovylicious
 
-
+import ga.ozli.minecraftmods.groovylicious.api.gui.ExtensibleScreen
+import ga.ozli.minecraftmods.groovylicious.dsl.ButtonBuilder
 import ga.ozli.minecraftmods.groovylicious.dsl.ScreenBuilder
 import groovy.transform.CompileStatic
+import net.minecraft.client.gui.components.Button
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.TitleScreen
+import net.minecraft.network.chat.TextComponent
 import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.client.event.ScreenOpenEvent
 import net.minecraftforge.eventbus.api.SubscribeEvent
@@ -24,6 +27,15 @@ class ClientForgeEvents {
     }
 
     static Screen testScreenDSL() {
+
+//        return new ExtensibleScreen("Test screen").tap {
+//            drawBackground = true
+//            onInit << { ExtensibleScreen thisScreen ->
+//                thisScreen.addRenderableWidget(
+//                        new Button(10, 10, 100, 20, new TextComponent("Test"), () -> {})
+//                )
+//            }
+//        }
 
         return ScreenBuilder.makeScreen("Test screen") {
             println title // prints TextComponent{text='Test screen', ...}

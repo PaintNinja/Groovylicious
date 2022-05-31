@@ -2,10 +2,12 @@ package ga.ozli.minecraftmods.groovylicious.api.gui
 
 import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
+import groovy.transform.Memoized
 import groovy.transform.Pure
 import groovy.transform.ToString
 import groovy.transform.stc.POJO
 import net.minecraft.ChatFormatting
+import net.minecraft.network.chat.TextColor
 import net.minecraft.util.FastColor
 
 /**
@@ -104,6 +106,9 @@ class Colour {
     int getR() { this.getRed() }
     int getG() { this.getGreen() }
     int getB() { this.getBlue() }
+
+    @Memoized
+    TextColor getTextColor() { TextColor.fromRgb(this.packed) }
 
     /* Conversion handler
      *

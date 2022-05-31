@@ -35,32 +35,6 @@ class Groovylicious {
         Colour orange = Colour.of(255, 165, 0)
         println SV(orange)
         println ""
-
-//        Colours.MyOtherClass.metaClass.someAPI = { i ->
-//            delegate.someAPI(i as Integer)
-//        }
-//        Colours.MyOtherClass.someAPI(Colours.MyClass)
-//
-//        Dsl.coloursDsl.alpha
-
-//        println Colours.White.alpha
-//        println Colours.White
-
-//        ColoursNew.define("magenta", 255, 0, 255)
-//        println ColoursNew.Magenta
-
-//        // what I have
-//        println ColoursNew.WHITE.argb
-//        println ColoursNew.White
-
-        //ArrayList<Integer> list = List.of(1, 2, 3)
-
-//        println Colours.White
-//        println Colours.White as int
-//        println Colours.White.packed
-//        println Colours.White.argb
-
-
     }
 
 //    @ModConfig
