@@ -45,7 +45,7 @@ class ExtensibleScreen extends Screen {
         if (drawBackground) this.renderBackground(poseStack)
         onRender.each { it.call(this, poseStack) }
         super.render(poseStack, mouseX, mouseY, partialTick)
-        if (!onPostRender.isEmpty()) onPostRender.each {it.call(this, poseStack) }
+        if (!onPostRender.isEmpty()) onPostRender.each { it.call(this, poseStack) }
     }
 
     // --- Access widening ---
@@ -67,21 +67,4 @@ class ExtensibleScreen extends Screen {
     Font getFont() {
         return super.font
     }
-
-//    def addRenderableOnly(widget) {
-//        return super.addRenderableOnly(widget)
-//    }
-//
-//    def addWidget(listener) {
-//        return super.addWidget(listener)
-//    }
 }
-
-//                // alternative syntax 1
-//                 size {
-//                    width = 100
-//                    height = 20
-//                }
-//
-//                // alternative syntax 2
-//                size = new Size(width: 100, height: 20)

@@ -1,7 +1,9 @@
 package ga.ozli.minecraftmods.groovylicious
 
+import com.mojang.blaze3d.vertex.PoseStack
 import ga.ozli.minecraftmods.groovylicious.dsl.ScreenBuilder
 import groovy.transform.CompileStatic
+import net.minecraft.client.gui.components.Button
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.TitleScreen
 import net.minecraftforge.api.distmarker.Dist
@@ -24,29 +26,24 @@ class ClientForgeEvents {
 
     static Screen testScreenDSL() {
 
-//        return new ExtensibleScreen("Test screen").tap {
-//            drawBackground = true
-//            onInit << { ExtensibleScreen thisScreen ->
-//                thisScreen.addRenderableWidget(
-//                        new Button(10, 10, 100, 20, new TextComponent("Test"), () -> {})
-//                )
-//            }
-//        }
-
         return ScreenBuilder.makeScreen("Test screen") {
             println title // prints TextComponent{text='Test screen', ...}
             drawBackground = true
 
             button {
-                //text "Test button"
+                text "Test button"
                 position x: 10,
                          y: 10
 
                 size width: 100,
                      height: 20
 
-                onClick {
+                onPress {
                     println "Clicked!"
+                }
+
+                onTooltip { Button button, PoseStack poseStack, int mouseX, int mouseY ->
+                    println "Tooltip"
                 }
             }
 
@@ -58,11 +55,27 @@ class ClientForgeEvents {
 
             editBox {
                 text "Edit me!"
-                position x: 10, y: 60
+                position x: 10, y: 80
                 size width: 100, height: 20
+            }
+
+            plainTextButton {
+                text "Plain text button"
+                position x: 10, y: 120
+                size width: 100, height: 20
+                onPress {
+                    println "Clicked!"
+                }
             }
         }
 
+//        return new ExtensibleScreen("Test screen").tap {
+//            drawBackground = true
+//            onInit << { ExtensibleScreen thisScreen ->
+//                thisScreen.addRenderableWidget(
+//                        new Button(10, 10, 100, 20, new TextComponent("Test"), () -> {})
+//                )
+//            }
+//        }
     }
-
 }

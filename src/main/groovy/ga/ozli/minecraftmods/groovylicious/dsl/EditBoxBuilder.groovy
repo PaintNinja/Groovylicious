@@ -16,7 +16,7 @@ class EditBoxBuilder implements PositionTrait, SizeTrait, TextTrait {
     boolean bordered = true
     boolean canLoseFocus = true
     boolean isEditable = true
-    Colour textColour
+    Colour textColour = Colours.EDITBOX_TEXT
     Colour textColourUneditable = Colours.EDITBOX_TEXTUNEDITABLE
 
     void textColour(final Colour colour) {
@@ -56,7 +56,7 @@ class EditBoxBuilder implements PositionTrait, SizeTrait, TextTrait {
     @Requires({ this.position && this.size && this.text })
     Closure buildClosure() {
         return { ExtensibleScreen screenInstance ->
-            screenInstance.addWidget(this.buildEditbox(screenInstance))
+            screenInstance.addRenderableWidget(this.buildEditbox(screenInstance))
         }
     }
 

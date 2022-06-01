@@ -54,6 +54,7 @@ class LabelBuilder implements PositionTrait, SizeTrait, TextTrait {
         this.textColour = new Colour(args)
     }
 
+    @Requires({ lineHeight >= 0 })
     void lineHeight(final int lineHeight) {
         this.lineHeight = lineHeight
     }

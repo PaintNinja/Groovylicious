@@ -33,6 +33,15 @@ class ScreenBuilder {
         this.backingScreen.onInit << buttonBuilder.buildClosure()
     }
 
+    void plainTextButton(@DelegatesTo(value = PlainTextButtonBuilder, strategy = DELEGATE_FIRST)
+                         @ClosureParams(value = SimpleType, options = "ga.ozli.minecraftmods.groovylicious.dsl.PlainTextButtonBuilder") final Closure closure) {
+        final plainTextButtonBuilder = new PlainTextButtonBuilder()
+        closure.delegate = plainTextButtonBuilder
+        closure.resolveStrategy = DELEGATE_FIRST
+        closure.call(plainTextButtonBuilder)
+        this.backingScreen.onInit << plainTextButtonBuilder.buildClosure()
+    }
+
     void label(@DelegatesTo(value = LabelBuilder, strategy = DELEGATE_FIRST)
                @ClosureParams(value = SimpleType, options = "ga.ozli.minecraftmods.groovylicious.dsl.LabelBuilder") final Closure closure) {
         final labelBuilder = new LabelBuilder()
@@ -65,7 +74,9 @@ class ScreenBuilder {
         return screenBuilder.build()
     }
 
-    static ExtensibleScreen makeScreen(final String title, @DelegatesTo(value = ScreenBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
+    static ExtensibleScreen makeScreen(final String title,
+                                       @DelegatesTo(value = ScreenBuilder, strategy = DELEGATE_FIRST)
+                                       @ClosureParams(value = SimpleType, options = "ga.ozli.minecraftmods.groovylicious.dsl.ScreenBuilder") final Closure closure) {
         return makeScreen(StringUtils.stringToComponent(title), closure)
     }
 }
