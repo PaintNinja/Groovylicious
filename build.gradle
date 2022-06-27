@@ -20,7 +20,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 
 minecraft {
-    mappings channel: 'parchment', version: '2022.05.22-1.18.2'
+    mappings channel: 'parchment', version: '2022.06.05-1.18.2'
 
     runs {
         configureEach {
@@ -102,7 +102,7 @@ repositories {
 
 dependencies {
     // Forge
-    minecraft 'net.minecraftforge:forge:1.18.2-40.1.25'
+    minecraft 'net.minecraftforge:forge:1.18.2-40.1.45'
 
     // Austin's Powerful Language Provider: Keeping it Groovy, baby!
     implementation 'net.thesilkminer.mc.austin:aplp-1.18.2:1.0.1'
