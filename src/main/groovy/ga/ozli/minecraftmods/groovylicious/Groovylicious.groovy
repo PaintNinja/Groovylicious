@@ -5,7 +5,6 @@ import ga.ozli.minecraftmods.groovylicious.transform.ModConfig
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
-import groovy.transform.stc.POJO
 import net.minecraftforge.common.ForgeConfigSpec
 import net.minecraftforge.fml.ModLoadingContext
 import net.thesilkminer.mc.austin.api.Mod
@@ -18,7 +17,6 @@ class Groovylicious {
     @PackageScope static final String MOD_ID = "groovylicious"
 
     Groovylicious() {
-        Config.init()
 //        AstBuilder builder = new AstBuilder()
 //        List<ASTNode> nodes = builder.buildFromString('println "${this.getModule().getName()}-common.toml"')
 //        nodes.each {
@@ -27,14 +25,14 @@ class Groovylicious {
 //        testColoursAPI()
 //        println ''
 
-        println "ModID: ${ModLoadingContext.get().activeContainer.modId}"
-        doDynamicStuff()
+//        println "ModID: ${ModLoadingContext.get().activeContainer.modId}"
+//        doDynamicStuff()
     }
 
-    @CompileDynamic
-    static void doDynamicStuff() {
-
-    }
+//    @CompileDynamic
+//    static void doDynamicStuff() {
+//
+//    }
 
     @CompileStatic
     static void testColoursAPI() {
@@ -71,8 +69,6 @@ class Groovylicious {
 
             /** The holy words of the messiah's mother */
             static String quote = "He's not the messiah, he's a very naughty boy!"
-
-            static void initGroup() {}
         }
 
         /** Is the parrot alive? */
@@ -87,8 +83,9 @@ class Groovylicious {
         // a config value with no default, no range and no groovydoc comment
         static String noDefaultString
 
-        static void init() {
+        // optional - make sure to call this if explicitly declared
+        /*static void init() {
             // this method's just here to load this config class
-        }
+        }*/
     }
 }

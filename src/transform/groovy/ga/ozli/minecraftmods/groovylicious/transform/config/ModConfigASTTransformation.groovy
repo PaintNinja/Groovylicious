@@ -1,10 +1,11 @@
 package ga.ozli.minecraftmods.groovylicious.transform.config
 
 import groovy.transform.CompileStatic
-import groovy.transform.stc.POJO
 import net.minecraftforge.common.ForgeConfigSpec
 import net.minecraftforge.fml.ModLoadingContext
 import net.minecraftforge.fml.config.ModConfig
+import net.thesilkminer.mc.austin.api.Mod
+import net.thesilkminer.mc.austin.api.Mojo
 import org.codehaus.groovy.GroovyBugError
 import org.codehaus.groovy.ast.*
 import org.codehaus.groovy.ast.expr.*
@@ -117,10 +118,104 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
         if (targetClassNode.properties.isEmpty())
             addError("Unable to detect any properties inside class '${targetClassNode.getName()}' annotated with '${configAnnotation.getClassNode().getName()}'", targetClassNode)
 
-        // todo: support config groups by declaring inner static classes in the dataclass
+        /**
+         * Now check if the config dataclass has an explicitly defined static void init() method.
+         * If so, we'll use that. If not, we'll generate our own.
+         */
+        boolean hasInitMethod = false
+        targetClassNode.methods.each { method ->
+            if (method.returnType == ClassHelper.VOID_TYPE && method.name == 'init' && method.modifiers == (method.modifiers | ACC_STATIC)) {
+                hasInitMethod = true
+                return
+            }
+        }
+        if (!hasInitMethod) {
+            targetClassNode.addMethod(
+                    'init',
+                    ACC_STATIC,
+                    ClassHelper.VOID_TYPE,
+                    [] as Parameter[],
+                    ClassNode.EMPTY_ARRAY,
+                    new BlockStatement()
+            )
+
+            /**
+             * If we needed to generate our own init method, we'll probably need to handle calling it ourselves too...
+             *
+             * Let's see if the outer class is annotated with @Mojo or @Mod.
+             * If it does, we know that this config dataclass is inside the Mod's main class and can add a static { Config.init() } to the main class.
+             */
+            boolean insideModClass = false
+            targetClassNode.outerClass.annotations.each { annotationNode ->
+                if (annotationNode.classNode == ClassHelper.make(Mojo) || annotationNode.classNode == ClassHelper.make(Mod)) {
+                    insideModClass = true
+                    return
+                }
+            }
+            if (insideModClass) {
+                targetClassNode.outerClass.addStaticInitializerStatements([
+                        new ExpressionStatement(
+                                new MethodCallExpression(
+                                        new ClassExpression(targetClassNode),
+                                        'init',
+                                        ArgumentListExpression.EMPTY_ARGUMENTS
+                                )
+                        ) as Statement
+                ], false)
+            } else {
+                // todo: more comprehensive search of the mod's main class
+                // todo: the option to turn off these warnings if the dev prefers
+                println "Warning: Implied init() method generated for @ModConfig class but couldn't find the Mod's main class."
+                println "The config will not be initialised automatically because of this. Please move the config inside the mod's main class or add an explicit call to ${targetClassNode.name}.init()"
+            }
+
+            // keeping this just in case I need it for if APLP adds support for GroovyScript-like mods (Groovy mods without an explicitly declared main class)
+            // and the above doesn't work
+//            if (!targetClassNode.outerClass.declaredConstructors.isEmpty()) {
+//                targetClassNode.outerClass.declaredConstructors.each { constructorNode ->
+//                    if (constructorNode.parameters.size() === 0) { // found a constructor without params
+//                        if (constructorNode.name.toLowerCase(Locale.ROOT) == modId) { // bingo!
+//                            targetClassNode.outerClass.addStaticInitializerStatements([
+//                                    new ExpressionStatement(
+//                                            new MethodCallExpression(
+//                                                    new ClassExpression(targetClassNode),
+//                                                    'init',
+//                                                    ArgumentListExpression.EMPTY_ARGUMENTS
+//                                            )
+//                                    ) as Statement
+//                            ], false)
+//                        }
+//                    }
+//                }
+//            }
+
+        }
+
+        // WIP: support config groups by declaring inner static classes in the dataclass
+        // todo: move targetClassNode.properties.each code below to its own method and call it from each inner class
         targetClassNode.innerClasses.each { InnerClassNode innerClass ->
             if (innerClass.modifiers != (innerClass.modifiers | ACC_STATIC))
                 addError('Non-static config groups are not supported', innerClass)
+
+            boolean hasInitGroupMethod = false
+            innerClass.methods.each { method ->
+                if (method.name == 'initGroup') {
+                    hasInitGroupMethod = true
+                    return
+                }
+            }
+
+            // if the inner class doesn't have an explicit static void initGroup() method, generate one
+            if (!hasInitGroupMethod) {
+                innerClass.addMethod(
+                        'initGroup',
+                        ACC_PUBLIC | ACC_STATIC, // modifiers
+                        ClassHelper.VOID_TYPE, // return type
+                        [] as Parameter[], // params
+                        ClassNode.EMPTY_ARRAY, // exceptions
+                        new BlockStatement() // code
+                )
+            }
 
             /**
              * Assuming inner class name == "MyConfigGroup" in this example:
@@ -142,7 +237,6 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                             ),
 
                             // generate the call to the initGroup() static method on the inner class to initialize it
-                            // todo: generate the static initGroup() method if not explicitly defined
                             new ExpressionStatement(
                                     new MethodCallExpression(
                                             new ClassExpression(innerClass),
