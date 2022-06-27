@@ -1,6 +1,7 @@
 package ga.ozli.minecraftmods.groovylicious.transform.config
 
 import groovy.transform.CompileStatic
+import groovy.transform.stc.POJO
 import net.minecraftforge.common.ForgeConfigSpec
 import net.minecraftforge.fml.ModLoadingContext
 import net.minecraftforge.fml.config.ModConfig
@@ -10,8 +11,8 @@ import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codehaus.groovy.ast.stmt.IfStatement
-import org.codehaus.groovy.ast.stmt.ReturnStatement
 import org.codehaus.groovy.ast.stmt.Statement
+import org.codehaus.groovy.ast.tools.GeneralUtils
 import org.codehaus.groovy.control.CompilePhase
 import org.codehaus.groovy.control.SourceUnit
 import org.codehaus.groovy.transform.AbstractASTTransformation
@@ -88,7 +89,7 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
         targetClassNode.fields.each { field ->
             if (field.type == configBuilderClassNode) {
                 configBuilderVariableName = field.name
-                return // don't continue iterating once we've found what we're looking for
+                return // stop iterating once we've found what we're looking for
             }
         }
         if (configBuilderVariableName == '$configBuilder') {
@@ -111,10 +112,56 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
             )
         }
 
+        final VariableExpression configBuilderVarExpr = new VariableExpression(configBuilderVariableName, configBuilderClassNode)
+
         if (targetClassNode.properties.isEmpty())
             addError("Unable to detect any properties inside class '${targetClassNode.getName()}' annotated with '${configAnnotation.getClassNode().getName()}'", targetClassNode)
 
         // todo: support config groups by declaring inner static classes in the dataclass
+        targetClassNode.innerClasses.each { InnerClassNode innerClass ->
+            if (innerClass.modifiers != (innerClass.modifiers | ACC_STATIC))
+                addError('Non-static config groups are not supported', innerClass)
+
+            /**
+             * Assuming inner class name == "MyConfigGroup" in this example:
+             * static void init() {
+             *     $configBuilder.push('MyConfigGroup')
+             *     MyConfigGroup.initGroup()
+             *     $configBuilder.pop()
+             * }
+             */
+            targetClassNode.getMethod("init", Parameter.EMPTY_ARRAY).code.asType(BlockStatement).addStatements(
+                    [
+                            // generate the push() method for the config group
+                            new ExpressionStatement(
+                                    new MethodCallExpression(
+                                            configBuilderVarExpr,
+                                            'push',
+                                            GeneralUtils.args(GeneralUtils.constX(innerClass.name))
+                                    )
+                            ),
+
+                            // generate the call to the initGroup() static method on the inner class to initialize it
+                            // todo: generate the static initGroup() method if not explicitly defined
+                            new ExpressionStatement(
+                                    new MethodCallExpression(
+                                            new ClassExpression(innerClass),
+                                            'initGroup',
+                                            ArgumentListExpression.EMPTY_ARGUMENTS
+                                    )
+                            ),
+
+                            // generate the pop() method for the config group
+                            new ExpressionStatement(
+                                    new MethodCallExpression(
+                                            configBuilderVarExpr,
+                                            'pop',
+                                            ArgumentListExpression.EMPTY_ARGUMENTS
+                                    )
+                            )
+                    ] as List<Statement>
+            )
+        }
 
         // for each property inside the class...
         targetClassNode.properties.each { PropertyNode property ->
@@ -304,7 +351,7 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                                 Parameter.EMPTY_ARRAY,
                                 ClassNode.EMPTY_ARRAY,
                                 new BlockStatement(
-                                        [new ReturnStatement(
+                                        [GeneralUtils.returnS( // return statement
                                                 new MethodCallExpression(
                                                         new VariableExpression(
                                                                 "\$configValueFor${property.name.capitalize()}",
@@ -313,7 +360,7 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                                                         'get',
                                                         ArgumentListExpression.EMPTY_ARGUMENTS
                                                 )
-                                        ) as Statement],
+                                        )],
                                         targetClassNodeScope
                                 )
                         )
@@ -334,6 +381,11 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                  *
                  * Todo: Memoize the if check
                  */
+                final VariableExpression configValueForPropName = GeneralUtils.varX(
+                        "\$configValueFor${property.name.capitalize()}",
+                        ConfigTypes.getWrappedType(property.type, isRangedType)
+                )
+
                 targetClassNode.addMethod(
                         new MethodNode(
                                 "set${property.name.capitalize()}",
@@ -361,10 +413,7 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                                                 new BlockStatement(
                                                         [new ExpressionStatement(
                                                                 new MethodCallExpression(
-                                                                        new VariableExpression(
-                                                                                "\$configValueFor${property.name.capitalize()}",
-                                                                                ConfigTypes.getWrappedType(property.type, isRangedType),
-                                                                        ),
+                                                                        configValueForPropName,
                                                                         'set',
                                                                         new ArgumentListExpression(
                                                                                 new VariableExpression(
@@ -382,10 +431,7 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                                                 )
                                         ) as Statement] : [new ExpressionStatement(
                                                 new MethodCallExpression(
-                                                        new VariableExpression(
-                                                                "\$configValueFor${property.name.capitalize()}",
-                                                                ConfigTypes.getWrappedType(property.type, isRangedType),
-                                                        ),
+                                                        configValueForPropName,
                                                         'set',
                                                         new ArgumentListExpression(
                                                                 new VariableExpression(
@@ -405,8 +451,6 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
             }
         }
 
-
-
         /**
          * private static final ForgeConfigSpec $configSpec = configBuilder.build()
          */
@@ -417,8 +461,8 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                         ClassHelper.make(ForgeConfigSpec),
                         targetClassNode,
                         new MethodCallExpression(
-                                new VariableExpression(configBuilderVariableName),
-                                new ConstantExpression('build'),
+                                configBuilderVarExpr,
+                                'build',
                                 ArgumentListExpression.EMPTY_ARGUMENTS
                         )
                 )
@@ -444,23 +488,23 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                                                 new ClassExpression(ClassHelper.make(ModConfig.Type)),
                                                 modConfigType.name()
                                         ),
-                                        new VariableExpression('$configSpec'),
+                                        new VariableExpression('$configSpec', ClassHelper.make(ForgeConfigSpec)),
 
                                         modId == '$unknown' ? new GStringExpression(
                                                 // if the modId is missing from the config annotation, use the class' module name to determine the modId
                                                 '',
                                                 [
-                                                        new ConstantExpression(''),
+                                                        GeneralUtils.constX(''), // will be filled in by the first entry of the array below
                                                         new ConstantExpression('-' + modConfigType.name().toLowerCase() + '.toml')
                                                 ],
                                                 [
                                                         new MethodCallExpression(
                                                                 new MethodCallExpression(
                                                                         VariableExpression.THIS_EXPRESSION,
-                                                                        new ConstantExpression('getModule'),
+                                                                        'getModule',
                                                                         ArgumentListExpression.EMPTY_ARGUMENTS
                                                                 ),
-                                                                new ConstantExpression('getName'),
+                                                                'getName',
                                                                 ArgumentListExpression.EMPTY_ARGUMENTS
                                                         ) as Expression
                                                 ]
