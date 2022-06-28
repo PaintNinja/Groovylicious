@@ -1,6 +1,8 @@
 package ga.ozli.minecraftmods.groovylicious.transform.config
 
+
 import groovy.transform.CompileStatic
+import groovy.transform.Generated
 import net.minecraftforge.common.ForgeConfigSpec
 import net.minecraftforge.fml.ModLoadingContext
 import net.minecraftforge.fml.config.ModConfig
@@ -29,6 +31,8 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
 
     static ModConfig.Type modConfigType = ModConfig.Type.COMMON
     static String modId = '$unknown'
+
+    private static final AnnotationNode generatedAnnotation = new AnnotationNode(ClassHelper.make(Generated))
 
     static ConstantExpression getPropertyValueOrDefault(PropertyNode property) {
         if ((property.type == ClassHelper.STRING_TYPE || property.type == ClassHelper.GSTRING_TYPE) && property.field.initialValueExpression === null) {
@@ -96,21 +100,19 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
         if (configBuilderVariableName == '$configBuilder') {
             /**
              * Adds this field to the start of the class:
+             * @Generated
              * private static final ForgeConfigSpec.Builder $configBuilder = new ForgeConfigSpec.Builder()
              * Prepending generated variable names with a $ to avoid possible conflicts with declared variables
              */
             targetClassNode.addFieldFirst(
-                    new FieldNode(
-                            configBuilderVariableName,
-                            ACC_PRIVATE | ACC_STATIC | ACC_FINAL,
+                    configBuilderVariableName,
+                    ACC_PRIVATE | ACC_STATIC | ACC_FINAL,
+                    configBuilderClassNode,
+                    new ConstructorCallExpression(
                             configBuilderClassNode,
-                            targetClassNode,
-                            new ConstructorCallExpression(
-                                    configBuilderClassNode,
-                                    ArgumentListExpression.EMPTY_ARGUMENTS
-                            )
+                            ArgumentListExpression.EMPTY_ARGUMENTS
                     )
-            )
+            ).addAnnotation(generatedAnnotation)
         }
 
         final VariableExpression configBuilderVarExpr = new VariableExpression(configBuilderVariableName, configBuilderClassNode)
@@ -137,22 +139,22 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                     [] as Parameter[],
                     ClassNode.EMPTY_ARRAY,
                     new BlockStatement()
-            )
+            ).addAnnotation(generatedAnnotation)
 
             /**
              * If we needed to generate our own init method, we'll probably need to handle calling it ourselves too...
              *
              * Let's see if the outer class is annotated with @Mojo or @Mod.
-             * If it does, we know that this config dataclass is inside the Mod's main class and can add a static { Config.init() } to the main class.
              */
             boolean insideModClass = false
             targetClassNode.outerClass.annotations.each { annotationNode ->
-                if (annotationNode.classNode == ClassHelper.make(Mojo) || annotationNode.classNode == ClassHelper.make(Mod)) {
+                if (annotationNode.classNode == ClassHelper.makeCached(Mojo) || annotationNode.classNode == ClassHelper.makeCached(Mod)) {
                     insideModClass = true
                     return
                 }
             }
             if (insideModClass) {
+                // If it does, we know that this config dataclass is inside the Mod's main class and can add a static { Config.init() } to the main class.
                 targetClassNode.outerClass.addStaticInitializerStatements([
                         new ExpressionStatement(
                                 new MethodCallExpression(
@@ -163,32 +165,55 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                         ) as Statement
                 ], false)
             } else {
-                // todo: more comprehensive search of the mod's main class
+                // the outer class isn't annotated with @Mojo or @Mod, so the Mod's main class must be somewhere else...
+                // let's take a guess using the module name (Forge mods usually have the mod's main class be named the same as the modId but with capitalisation)
+
+                // can't modify random classes out of the blue from within an ASTT, would need to do a global AST transformation to do this and then
+                // somehow connect it up with this ModConfigASTTransformation.
+//                ClassNode guessedMojoMainClass = ClassHelper.make("${targetClassNode.packageName}.${modId.capitalize()}")
+//                println SV(guessedMojoMainClass)
+//                guessedMojoMainClass.addStaticInitializerStatements([
+//                        new ExpressionStatement(
+//                                new MethodCallExpression(
+//                                        new ClassExpression(targetClassNode),
+//                                        'init',
+//                                        ArgumentListExpression.EMPTY_ARGUMENTS
+//                                )
+//                        ) as Statement
+//                ], false)
+
+                // can't do runtime stuff at compiletime, derp
+                // let's use the ForgeSPI to search all the mod's classes for a Mojo or Mod annotation and check if its value matches the config modId
+//                final Type Mojo = Type.getType(Mojo)
+//                final Type Mod = Type.getType(Mod)
+//                ModLoadingContext.get().activeContainer.modInfo.owningFile.file.scanResult.annotations.findAll { AnnotationData annotationData ->
+//                    final Type annotationType = annotationData.annotationType()
+//                    if (annotationType == Mojo || annotationType == Mod) { // found a class annotated with @Mojo or @Mod
+//                        def mojoAnnotationValue = annotationData.annotationData().get('value')
+//                        if (mojoAnnotationValue instanceof String || mojoAnnotationValue instanceof GString) {
+//                            mojoAnnotationValue = mojoAnnotationValue as String
+//                            if (mojoAnnotationValue == modId) {
+//                                // found the mod's main class with the inferred modId
+//                                // let's add a static { Config.init() } to it
+//                                final ClassNode mojoMainClass = ClassHelper.make(Class.forName(annotationData.clazz().className))
+//                                mojoMainClass.addStaticInitializerStatements([
+//                                        new ExpressionStatement(
+//                                                new MethodCallExpression(
+//                                                        new ClassExpression(targetClassNode),
+//                                                        'init',
+//                                                        ArgumentListExpression.EMPTY_ARGUMENTS
+//                                                )
+//                                        ) as Statement
+//                                ], false)
+//                            }
+//                        }
+//                    }
+//                }
+
                 // todo: the option to turn off these warnings if the dev prefers
                 println "Warning: Implied init() method generated for @ModConfig class but couldn't find the Mod's main class."
                 println "The config will not be initialised automatically because of this. Please move the config inside the mod's main class or add an explicit call to ${targetClassNode.name}.init()"
             }
-
-            // keeping this just in case I need it for if APLP adds support for GroovyScript-like mods (Groovy mods without an explicitly declared main class)
-            // and the above doesn't work
-//            if (!targetClassNode.outerClass.declaredConstructors.isEmpty()) {
-//                targetClassNode.outerClass.declaredConstructors.each { constructorNode ->
-//                    if (constructorNode.parameters.size() === 0) { // found a constructor without params
-//                        if (constructorNode.name.toLowerCase(Locale.ROOT) == modId) { // bingo!
-//                            targetClassNode.outerClass.addStaticInitializerStatements([
-//                                    new ExpressionStatement(
-//                                            new MethodCallExpression(
-//                                                    new ClassExpression(targetClassNode),
-//                                                    'init',
-//                                                    ArgumentListExpression.EMPTY_ARGUMENTS
-//                                            )
-//                                    ) as Statement
-//                            ], false)
-//                        }
-//                    }
-//                }
-//            }
-
         }
 
         // WIP: support config groups by declaring inner static classes in the dataclass
@@ -339,60 +364,56 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                 if (ConfigTypes.Bounded.primitiveCandidates.contains(property.type) && property.type != configBuilderClassNode) {
                     /**
                      * Assuming `property.name` == "test", `property.type` == `int`, property value == `42`, property groovydoc `{@range 0..100}` in this example:
+                     * @Generated
                      * static ForgeConfigSpec.IntValue $configValueForTest = $configBuilder.defineInRange('test', 42, 0, 100)
                      */
                     targetClassNode.addField(
-                            new FieldNode(
-                                    "\$configValueFor${property.name.capitalize()}",
-                                    ACC_PUBLIC | ACC_STATIC | ACC_FINAL,
-                                    ConfigTypes.getWrappedType(property.type, isRangedType),
-                                    targetClassNode,
-                                    new MethodCallExpression(
-                                            hasComments ? new MethodCallExpression(
-                                                    new VariableExpression(
-                                                            configBuilderVariableName,
-                                                            configBuilderClassNode
-                                                    ),
-                                                    'comment',
-                                                    new ArgumentListExpression(
-                                                            groovyDocCommentsExpressions
-                                                    )
-                                            ) : new VariableExpression(
+                            "\$configValueFor${property.name.capitalize()}",
+                            ACC_PUBLIC | ACC_STATIC | ACC_FINAL,
+                            ConfigTypes.getWrappedType(property.type, isRangedType),
+                            new MethodCallExpression(
+                                    hasComments ? new MethodCallExpression(
+                                            new VariableExpression(
                                                     configBuilderVariableName,
                                                     configBuilderClassNode
                                             ),
-                                            'defineInRange',
-                                            new ArgumentListExpression([
-                                                    new ConstantExpression(property.name) as Expression,
-                                                    getPropertyValueOrDefault(property),
-                                                    new ConstantExpression(range.from.asType(property.type.typeClass)) ?: ConfigTypes.Bounded.getDefaultLowerBound(property.type),
-                                                    new ConstantExpression(range.to.asType(property.type.typeClass)) ?: ConfigTypes.Bounded.getDefaultUpperBound(property.type)
-                                            ])
-                                    )
+                                            'comment',
+                                            new ArgumentListExpression(
+                                                    groovyDocCommentsExpressions
+                                            )
+                                    ) : new VariableExpression(
+                                            configBuilderVariableName,
+                                            configBuilderClassNode
+                                    ),
+                                    'defineInRange',
+                                    new ArgumentListExpression([
+                                            new ConstantExpression(property.name) as Expression,
+                                            getPropertyValueOrDefault(property),
+                                            new ConstantExpression(range.from.asType(property.type.typeClass)) ?: ConfigTypes.Bounded.getDefaultLowerBound(property.type),
+                                            new ConstantExpression(range.to.asType(property.type.typeClass)) ?: ConfigTypes.Bounded.getDefaultUpperBound(property.type)
+                                    ])
                             )
-                    )
+                    ).addAnnotation(generatedAnnotation)
 
                     /**
                      * Assuming the same example as above:
+                     * @Generated
                      * static NumberRange $configRangeForTest = new NumberRange(0, 100, false, false)
                      */
                     targetClassNode.addField(
-                            new FieldNode(
-                                    "\$configRangeFor${property.name.capitalize()}",
-                                    ACC_PUBLIC | ACC_STATIC | ACC_FINAL,
-                                    ClassHelper.make(NumberRange),
-                                    targetClassNode,
-                                    new ConstructorCallExpression(
-                                            ClassHelper.make(NumberRange),
-                                            new ArgumentListExpression([
-                                                    useLowerDouble ? new ConstantExpression(lowerDouble) as Expression : new ConstantExpression(lowerLong) as Expression,
-                                                    useUpperDouble ? new ConstantExpression(upperDouble) : new ConstantExpression(upperLong),
-                                                    isLowerExclusive ? ConstantExpression.TRUE : ConstantExpression.FALSE,
-                                                    isUpperExclusive ? ConstantExpression.TRUE : ConstantExpression.FALSE
-                                            ])
-                                    )
+                            "\$configRangeFor${property.name.capitalize()}",
+                            ACC_PUBLIC | ACC_STATIC | ACC_FINAL,
+                            ClassHelper.makeCached(NumberRange),
+                            new ConstructorCallExpression(
+                                    ClassHelper.makeCached(NumberRange),
+                                    new ArgumentListExpression([
+                                            useLowerDouble ? new ConstantExpression(lowerDouble) as Expression : new ConstantExpression(lowerLong) as Expression,
+                                            useUpperDouble ? new ConstantExpression(upperDouble) : new ConstantExpression(upperLong),
+                                            isLowerExclusive ? ConstantExpression.TRUE : ConstantExpression.FALSE,
+                                            isUpperExclusive ? ConstantExpression.TRUE : ConstantExpression.FALSE
+                                    ])
                             )
-                    )
+                    ).addAnnotation(generatedAnnotation)
                 }
             } else if (ConfigTypes.primitivesList.contains(property.type) && property.type != configBuilderClassNode) {
                 targetClassNode.addField(
@@ -419,7 +440,7 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                                         getPropertyValueOrDefault(property),
                                 ])
                         )
-                )
+                ).addAnnotation(generatedAnnotation)
             } else if (property.type != configBuilderClassNode) {
                 println "Error: Unknown type \"${property.type}\""
                 println "Supported types: ${ConfigTypes.list}"
@@ -433,40 +454,41 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
 
                 /**
                  * Assuming `property.name` == "test" and `property.type` == `int` in this example:
+                 * @Generated
                  * static int getTest() {
                  *     return $configValueForTest.get()
                  * }
                  */
                 targetClassNode.addMethod(
-                        new MethodNode(
-                                "get${property.name.capitalize()}",
-                                ACC_PUBLIC | ACC_STATIC,
-                                ClassHelper.getUnwrapper(property.type),
-                                Parameter.EMPTY_ARRAY,
-                                ClassNode.EMPTY_ARRAY,
-                                new BlockStatement(
-                                        [GeneralUtils.returnS( // return statement
-                                                new MethodCallExpression(
-                                                        new VariableExpression(
-                                                                "\$configValueFor${property.name.capitalize()}",
-                                                                ConfigTypes.getWrappedType(property.type, isRangedType),
-                                                        ),
-                                                        'get',
-                                                        ArgumentListExpression.EMPTY_ARGUMENTS
-                                                )
-                                        )],
-                                        targetClassNodeScope
-                                )
+                        "get${property.name.capitalize()}",
+                        ACC_PUBLIC | ACC_STATIC,
+                        ClassHelper.getUnwrapper(property.type),
+                        Parameter.EMPTY_ARRAY,
+                        ClassNode.EMPTY_ARRAY,
+                        new BlockStatement(
+                                [GeneralUtils.returnS( // return statement
+                                        new MethodCallExpression(
+                                                new VariableExpression(
+                                                        "\$configValueFor${property.name.capitalize()}",
+                                                        ConfigTypes.getWrappedType(property.type, isRangedType),
+                                                ),
+                                                'get',
+                                                ArgumentListExpression.EMPTY_ARGUMENTS
+                                        )
+                                )],
+                                targetClassNodeScope
                         )
-                )
+                ).addAnnotation(generatedAnnotation)
 
                 /**
                  * Assuming `property.name` == "test" in this example:
+                 * @Generated
                  * static void setTest(int newValue) {
                  *     $configValueForTest.set(newValue)
                  * }
                  *
                  * For ranged config values, the configValueForX is only set if newValue is within the accepted range:
+                 * @Generated
                  * static void setTest(int newValue) {
                  *     if ($configRangeForTest.containsWithinBounds(newValue) {
                  *          $configValueForTest.set(newValue)
@@ -479,54 +501,21 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                         "\$configValueFor${property.name.capitalize()}",
                         ConfigTypes.getWrappedType(property.type, isRangedType)
                 )
-
                 targetClassNode.addMethod(
-                        new MethodNode(
-                                "set${property.name.capitalize()}",
-                                ACC_PUBLIC | ACC_STATIC, // modifiers
-                                ClassHelper.VOID_TYPE, // return type
-                                [new Parameter(ClassHelper.getUnwrapper(property.type), 'newValue')] as Parameter[], // params
-                                ClassNode.EMPTY_ARRAY, // exceptions
-                                new BlockStatement( // code
-                                        isRangedType ? [new IfStatement(
-                                                new BooleanExpression(
-                                                        new MethodCallExpression(
-                                                                new VariableExpression(
-                                                                        "\$configRangeFor${property.name.capitalize()}",
-                                                                        ClassHelper.make(NumberRange)
-                                                                ),
-                                                                'containsWithinBounds',
-                                                                new ArgumentListExpression(
-                                                                        new VariableExpression(
-                                                                                'newValue',
-                                                                                ClassHelper.getUnwrapper(property.type)
-                                                                        )
-                                                                )
-                                                        )
-                                                ),
-                                                new BlockStatement(
-                                                        [new ExpressionStatement(
-                                                                new MethodCallExpression(
-                                                                        configValueForPropName,
-                                                                        'set',
-                                                                        new ArgumentListExpression(
-                                                                                new VariableExpression(
-                                                                                        'newValue',
-                                                                                        ClassHelper.getUnwrapper(property.type)
-                                                                                )
-                                                                        )
-                                                                )
-                                                        ) as Statement],
-                                                        targetClassNodeScope
-                                                ),
-                                                new BlockStatement(
-                                                        [],
-                                                        targetClassNodeScope
-                                                )
-                                        ) as Statement] : [new ExpressionStatement(
+                        "set${property.name.capitalize()}",
+                        ACC_PUBLIC | ACC_STATIC, // modifiers
+                        ClassHelper.VOID_TYPE, // return type
+                        [new Parameter(ClassHelper.getUnwrapper(property.type), 'newValue')] as Parameter[], // params
+                        ClassNode.EMPTY_ARRAY, // exceptions
+                        new BlockStatement( // code
+                                isRangedType ? [new IfStatement(
+                                        new BooleanExpression(
                                                 new MethodCallExpression(
-                                                        configValueForPropName,
-                                                        'set',
+                                                        new VariableExpression(
+                                                                "\$configRangeFor${property.name.capitalize()}",
+                                                                ClassHelper.makeCached(NumberRange)
+                                                        ),
+                                                        'containsWithinBounds',
                                                         new ArgumentListExpression(
                                                                 new VariableExpression(
                                                                         'newValue',
@@ -534,11 +523,41 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                                                                 )
                                                         )
                                                 )
-                                        ) as Statement],
-                                        targetClassNodeScope
-                                )
+                                        ),
+                                        new BlockStatement(
+                                                [new ExpressionStatement(
+                                                        new MethodCallExpression(
+                                                                configValueForPropName,
+                                                                'set',
+                                                                new ArgumentListExpression(
+                                                                        new VariableExpression(
+                                                                                'newValue',
+                                                                                ClassHelper.getUnwrapper(property.type)
+                                                                        )
+                                                                )
+                                                        )
+                                                ) as Statement],
+                                                targetClassNodeScope
+                                        ),
+                                        new BlockStatement(
+                                                [],
+                                                targetClassNodeScope
+                                        )
+                                ) as Statement] : [new ExpressionStatement(
+                                        new MethodCallExpression(
+                                                configValueForPropName,
+                                                'set',
+                                                new ArgumentListExpression(
+                                                        new VariableExpression(
+                                                                'newValue',
+                                                                ClassHelper.getUnwrapper(property.type)
+                                                        )
+                                                )
+                                        )
+                                ) as Statement],
+                                targetClassNodeScope
                         )
-                )
+                ).addAnnotation(generatedAnnotation)
 
                 // make the property `private static final` to force Groovy to use the get() and set() methods
                 property.modifiers = ACC_PRIVATE | ACC_STATIC | ACC_FINAL
@@ -546,21 +565,19 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
         }
 
         /**
+         * @Generated
          * private static final ForgeConfigSpec $configSpec = configBuilder.build()
          */
         targetClassNode.addField(
-                new FieldNode(
-                        '$configSpec',
-                        ACC_PUBLIC | ACC_STATIC | ACC_FINAL,
-                        ClassHelper.make(ForgeConfigSpec),
-                        targetClassNode,
-                        new MethodCallExpression(
-                                configBuilderVarExpr,
-                                'build',
-                                ArgumentListExpression.EMPTY_ARGUMENTS
-                        )
+                '$configSpec',
+                ACC_PUBLIC | ACC_STATIC | ACC_FINAL,
+                ClassHelper.makeCached(ForgeConfigSpec),
+                new MethodCallExpression(
+                        configBuilderVarExpr,
+                        'build',
+                        ArgumentListExpression.EMPTY_ARGUMENTS
                 )
-        )
+        ).addAnnotation(generatedAnnotation)
 
         /**
          * Assuming the modId associated with the config data class is "TestMod"...
@@ -582,7 +599,7 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                                                 new ClassExpression(ClassHelper.make(ModConfig.Type)),
                                                 modConfigType.name()
                                         ),
-                                        new VariableExpression('$configSpec', ClassHelper.make(ForgeConfigSpec)),
+                                        new VariableExpression('$configSpec', ClassHelper.makeCached(ForgeConfigSpec)),
 
                                         modId == '$unknown' ? new GStringExpression(
                                                 // if the modId is missing from the config annotation, use the class' module name to determine the modId
