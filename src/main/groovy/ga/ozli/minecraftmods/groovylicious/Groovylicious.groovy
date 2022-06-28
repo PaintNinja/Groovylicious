@@ -62,7 +62,7 @@ class Groovylicious {
          */
         static float foxRotation = 9000.42f
 
-        // config groups are supported - simply add inner static classes
+        // config groups are supported (WIP) - simply add inner static classes
         static class LifeOfBrian {
             /** How far are you willing to walk to see the messiah? (in blocks) */
             static long willingToWalkDistance = 2000L

@@ -441,7 +441,7 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                         new MethodNode(
                                 "get${property.name.capitalize()}",
                                 ACC_PUBLIC | ACC_STATIC,
-                                ClassHelper.getWrapper(property.type),
+                                ClassHelper.getUnwrapper(property.type),
                                 Parameter.EMPTY_ARRAY,
                                 ClassNode.EMPTY_ARRAY,
                                 new BlockStatement(
