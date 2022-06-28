@@ -13,7 +13,7 @@ class Configs {
     static class Common {
         // This is optional:
         static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()
-        static ForgeConfigSpec.LongValue test = myBuilder.defineInRange('test', 0L, Long.MIN_VALUE, Long.MAX_VALUE)
+        //static ForgeConfigSpec.LongValue test = myBuilder.defineInRange('test', 0L, Long.MIN_VALUE, Long.MAX_VALUE) // todo: ignore explicitly defined ForgeConfigSpec.ConfigValue/IntValue/etc
 
         /** How fast do you need to drive to accomplish time travel? {@range 50..100} */
         static int timeTravelMph = 88
@@ -23,6 +23,8 @@ class Configs {
          * 100 is slow, 9999 is fast
          */
         static float foxRotation = 9000.42f
+
+        static long longTest = 123456789L
 
         // config groups are supported (WIP) - simply add inner static classes
         static class LifeOfBrian {

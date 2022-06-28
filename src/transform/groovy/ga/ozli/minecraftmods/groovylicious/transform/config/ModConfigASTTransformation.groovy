@@ -175,7 +175,7 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                         [] as Parameter[], // params
                         ClassNode.EMPTY_ARRAY, // exceptions
                         new BlockStatement() // code
-                )
+                ).addAnnotation(generatedAnnotation)
             }
 
             /**
@@ -205,7 +205,8 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
         }
 
         // for each property inside the class...
-        targetClassNode.properties.each { PropertyNode property ->
+        for (PropertyNode property in targetClassNode.properties) {
+            if (property.type == configBuilderClassNode) continue // skip the config builder
 
             boolean hasGroovyDoc = property.field.groovydoc?.content ?: false
             boolean hasComments = false
@@ -283,7 +284,7 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
 
                 //println SV(lowerStr, upperStr, lowerDouble, lowerLong, useLowerDouble, upperDouble, upperLong, useUpperDouble, isLowerExclusive, isUpperExclusive)
 
-                if (ConfigTypes.Bounded.primitiveCandidates.contains(property.type) && property.type != configBuilderClassNode) {
+                if (ConfigTypes.Bounded.primitiveCandidates.contains(property.type)) {
                     /**
                      * Assuming `property.name` == "test", `property.type` == `int`, property value == `42`, property groovydoc `{@range 0..100}` in this example:
                      * @Generated
@@ -337,7 +338,7 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                             )
                     ).addAnnotation(generatedAnnotation)
                 }
-            } else if (ConfigTypes.primitivesList.contains(property.type) && property.type != configBuilderClassNode) {
+            } else if (ConfigTypes.primitivesList.contains(property.type)) {
                 targetClassNode.addField(
                         "\$configValueFor${property.name.capitalize()}",
                         ACC_PUBLIC | ACC_STATIC | ACC_FINAL,
@@ -368,7 +369,7 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                 println "Supported types: ${ConfigTypes.list}"
             }
 
-            if (ConfigTypes.primitivesList.contains(property.type) && property.type != configBuilderClassNode) {
+            if (ConfigTypes.primitivesList.contains(property.type)) {
                 // generate custom get() and set() methods that redirect property access and modification (respectively) to
                 // the field made earlier
                 VariableScope targetClassNodeScope = new VariableScope()
@@ -379,7 +380,7 @@ class ModConfigASTTransformation extends AbstractASTTransformation {
                  * @Generated
                  * static int getTest() {
                  *     return $configValueForTest.get()
-                 * }
+                 *}
                  */
                 targetClassNode.addMethod(
                         "get${property.name.capitalize()}",
