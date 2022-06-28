@@ -5,9 +5,10 @@ import groovy.transform.CompileStatic
 import groovy.transform.stc.POJO
 import net.minecraftforge.common.ForgeConfigSpec
 
-@CompileStatic
 @POJO
+@CompileStatic
 class Configs {
+
     @ModConfig
     static class Common {
         // This is optional:
@@ -30,6 +31,11 @@ class Configs {
 
             /** The holy words of the messiah's mother */
             static String quote = "He's not the messiah, he's a very naughty boy!"
+
+            // optional
+            /*static void initGroup() {
+
+            }*/
         }
 
         /** Is the parrot alive? */
