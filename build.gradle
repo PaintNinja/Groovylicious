@@ -1,14 +1,10 @@
-buildscript {
-    dependencies {
-        classpath 'org.parchmentmc:librarian:1.+'
-    }
-}
 plugins {
-    id 'net.minecraftforge.gradle' version '5.1.+'
-    id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
     id 'groovy'
+    id 'eclipse'
+    id 'net.minecraftforge.gradle' version '5.1.+'
+    id 'org.parchmentmc.librarian.forgegradle' version '1.+'
+    id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
 }
-apply plugin: 'org.parchmentmc.librarian.forgegradle'
 
 version = '1.18.2-0.1.0'
 group = 'ga.ozli.minecraftmods.groovylicious'
@@ -114,7 +110,6 @@ dependencies {
     library 'org.apache.groovy:groovy-macro-library:4.0.1'
     library 'org.apache.groovy:groovy-templates:4.0.1'
     library 'org.apache.groovy:groovy-typecheckers:4.0.1'
-    library 'org.apache.groovy:groovy-groovydoc:4.0.1'
     library 'org.apache.groovy:groovy-contracts:4.0.1'
 
     // LazyDFU in dev env - speeds up initial load times at the cost of lag spikes in-game,
@@ -131,7 +126,7 @@ processResources {
     duplicatesStrategy DuplicatesStrategy.EXCLUDE
 }
 
-jar {
+tasks.named('jar', Jar) {
     from sourceSets.transform.output
     from sourceSets.main.output
 
@@ -153,6 +148,7 @@ jar {
 tasks.withType(GroovyCompile).configureEach { GroovyCompile task ->
     task.groovyOptions.fork = true
     task.groovyOptions.encoding = 'UTF-8'
+    task.groovyOptions.optimizationOptions.indy = true
 }
 
 compileGroovy.groovyOptions.configurationScript = file('src/transform/groovy/ga/ozli/minecraftmods/groovylicious/transform/groovycConfig.groovy')
