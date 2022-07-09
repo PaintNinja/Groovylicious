@@ -6,7 +6,7 @@ plugins {
     id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
 }
 
-version = '1.18.2-0.1.0'
+version = '1.18.2-0.2.0'
 group = 'ga.ozli.minecraftmods.groovylicious'
 archivesBaseName = 'groovylicious'
 
@@ -102,7 +102,7 @@ repositories {
 
 dependencies {
     // Forge
-    minecraft 'net.minecraftforge:forge:1.18.2-40.1.45'
+    minecraft 'net.minecraftforge:forge:1.18.2-40.1.60'
 
     // Austin's Powerful Language Provider: Keeping it Groovy, baby!
     implementation 'net.thesilkminer.mc.austin:aplp-1.18.2:1.0.1'
