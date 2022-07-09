@@ -53,6 +53,10 @@ sourceSets {
         }
 
         resources.srcDirs = []
+        resources {
+            srcDir 'src/transform/resources'
+        }
+
         compileClasspath += configurations.getByName('minecraft')
     }
 

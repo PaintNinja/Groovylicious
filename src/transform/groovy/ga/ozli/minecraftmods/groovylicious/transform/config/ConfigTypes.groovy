@@ -6,155 +6,167 @@ import org.codehaus.groovy.ast.ClassHelper
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.GenericsType
 import org.codehaus.groovy.ast.expr.ConstantExpression
+import org.codehaus.groovy.ast.tools.GeneralUtils
 import org.codehaus.groovy.ast.tools.GenericsUtils
 
 @CompileStatic
 class ConfigTypes {
 
-    // todo: look into FieldNode.originType instead of FieldNode.type
-    // todo: support bounded floats
-
-    /** Bounded ConfigTypes have set ranges that they accept, e.g. {@code 0..5} */
-    static class Bounded {
-        /** {@code ForgeConfigSpec.IntValue} */
-        static ClassNode intValue = ClassHelper.make(ForgeConfigSpec.IntValue)
-
-        /** {@code ForgeConfigSpec.LongValue} */
-        static ClassNode longValue = ClassHelper.make(ForgeConfigSpec.LongValue)
-
-        /** {@code ForgeConfigSpec.DoubleValue} */
-        static ClassNode doubleValue = ClassHelper.make(ForgeConfigSpec.DoubleValue)
-
-        /** A set of types that are suitable candidates for becoming a bounded type */
-        static Set<ClassNode> primitiveCandidates = Set.of(
-                ClassHelper.Integer_TYPE, ClassHelper.int_TYPE,
-                ClassHelper.Long_TYPE, ClassHelper.long_TYPE,
-                ClassHelper.Double_TYPE, ClassHelper.double_TYPE
-        )
-
-        /**
-         * Gets the MIN_VALUE of the associated wrapped property.type
-         * @param type the property.type
-         * @return the associated MIN_VALUE inside a ConstantExpression
-         */
-        static ConstantExpression getDefaultLowerBound(ClassNode type) {
-            return switch (type) {
-                case Bounded.intValue, Unbounded.intValue,
-                     ClassHelper.Integer_TYPE, ClassHelper.int_TYPE -> new ConstantExpression(Integer.MIN_VALUE)
-
-                case Bounded.longValue, Unbounded.longValue,
-                     ClassHelper.Long_TYPE, ClassHelper.long_TYPE -> new ConstantExpression(Long.MIN_VALUE)
-
-                case Bounded.doubleValue, Unbounded.doubleValue,
-                     ClassHelper.Double_TYPE, ClassHelper.double_TYPE -> new ConstantExpression(Double.MIN_VALUE)
-
-                default -> throw new Exception("Unsupported type: ${type}")
-            }
-        }
-
-        /**
-         * Gets the MAX_VALUE of the associated wrapped property.type
-         * @param type the property.type
-         * @return the associated MAX_VALUE inside a ConstantExpression
-         */
-        static ConstantExpression getDefaultUpperBound(ClassNode type) {
-            return switch (type) {
-                case Bounded.intValue, Unbounded.intValue,
-                     ClassHelper.Integer_TYPE, ClassHelper.int_TYPE -> new ConstantExpression(Integer.MAX_VALUE)
-
-                case Bounded.longValue, Unbounded.longValue,
-                     ClassHelper.Long_TYPE, ClassHelper.long_TYPE -> new ConstantExpression(Long.MAX_VALUE)
-
-                case Bounded.doubleValue, Unbounded.doubleValue,
-                     ClassHelper.Double_TYPE, ClassHelper.double_TYPE -> new ConstantExpression(Double.MAX_VALUE)
-
-                default -> throw new Exception("Unsupported type: ${type}")
-            }
-        }
+    interface ConfigValueType {
+        ClassNode getClassNode()
     }
 
-    static class Unbounded {
-        /** {@code ForgeConfigSpec.ConfigValue<Integer>} */
-        static ClassNode intValue = GenericsUtils.makeClassSafeWithGenerics(
-                ClassHelper.make(ForgeConfigSpec.ConfigValue),
-                new GenericsType(ClassHelper.Integer_TYPE)
-        )
-
-        /** {@code ForgeConfigSpec.ConfigValue<Long>} */
-        static ClassNode longValue = GenericsUtils.makeClassSafeWithGenerics(
-                ClassHelper.make(ForgeConfigSpec.ConfigValue),
-                new GenericsType(ClassHelper.Long_TYPE)
-        )
-
-        /** {@code ForgeConfigSpec.ConfigValue<Double>} */
-        static ClassNode doubleValue = GenericsUtils.makeClassSafeWithGenerics(
-                ClassHelper.make(ForgeConfigSpec.ConfigValue),
-                new GenericsType(ClassHelper.Double_TYPE)
-        )
-
-        /** {@code ForgeConfigSpec.ConfigValue<Float>} */
-        static ClassNode floatValue = GenericsUtils.makeClassSafeWithGenerics(
-                ClassHelper.make(ForgeConfigSpec.ConfigValue),
-                new GenericsType(ClassHelper.Float_TYPE)
-        )
-
-        /** {@code ForgeConfigSpec.BooleanValue} */
-        static ClassNode booleanValue = ClassHelper.make(ForgeConfigSpec.BooleanValue)
-
-        /** {@code ForgeConfigSpec.ConfigValue<String>} */
-        static ClassNode stringValue = GenericsUtils.makeClassSafeWithGenerics(
-                ClassHelper.make(ForgeConfigSpec.ConfigValue),
-                new GenericsType(ClassHelper.STRING_TYPE)
-        )
-
-        /** {@code ForgeConfigSpec.ConfigValue<?>} */
-        static ClassNode genericValue = GenericsUtils.makeClassSafeWithGenerics(
-                ClassHelper.make(ForgeConfigSpec.ConfigValue),
-                GenericsUtils.buildWildcardType(ClassHelper.make(ForgeConfigSpec.ConfigValue))
-        )
+    static ConfigValueType getConfigValueType(ClassNode primitiveType) {
+        return switch (primitiveType) {
+            case ClassHelper.Byte_TYPE, ClassHelper.byte_TYPE -> Bounded.BYTE_VALUE_TYPE
+            case ClassHelper.Short_TYPE, ClassHelper.short_TYPE -> Bounded.SHORT_VALUE_TYPE
+            case ClassHelper.Integer_TYPE, ClassHelper.int_TYPE -> Bounded.INT_VALUE_TYPE
+            case ClassHelper.Long_TYPE, ClassHelper.long_TYPE -> Bounded.LONG_VALUE_TYPE
+            case ClassHelper.Float_TYPE, ClassHelper.float_TYPE -> Bounded.FLOAT_VALUE_TYPE
+            case ClassHelper.Double_TYPE, ClassHelper.double_TYPE -> Bounded.DOUBLE_VALUE_TYPE
+            case ClassHelper.Boolean_TYPE, ClassHelper.boolean_TYPE -> Unbounded.BOOLEAN_VALUE_TYPE
+            case ClassHelper.GSTRING_TYPE, ClassHelper.STRING_TYPE -> Unbounded.STRING_VALUE_TYPE
+            default -> Unbounded.GENERIC_VALUE_TYPE
+            //default -> throw new Exception("Unsupported type: ${primitiveType}")
+        }
     }
-
-    static List<ClassNode> list = List.of(
-            Bounded.intValue, Bounded.longValue, Bounded.doubleValue,
-            Unbounded.intValue, Unbounded.longValue, Unbounded.doubleValue, Unbounded.floatValue, Unbounded.booleanValue, Unbounded.stringValue
-    )
-
-    static List<ClassNode> primitivesList = List.of(
-            ClassHelper.Integer_TYPE, ClassHelper.int_TYPE,
-            ClassHelper.Long_TYPE, ClassHelper.long_TYPE,
-            ClassHelper.Double_TYPE, ClassHelper.double_TYPE,
-            ClassHelper.Float_TYPE, ClassHelper.float_TYPE,
-            ClassHelper.Boolean_TYPE, ClassHelper.boolean_TYPE,
-            ClassHelper.STRING_TYPE, ClassHelper.GSTRING_TYPE
-    )
 
     /**
-     * Gets the wrapped ForgeConfigSpec type for a given standard library type
-     * @param unwrappedType should be a {@code property.type}
-     * @param bounded whether or not the returned wrapped type should be a bounded version (e.g. bounded IntValue vs unbounded ConfigValue<Integer>)
-     * @return the associated wrapped ForgeConfigSpec type
+     * Bounded ConfigTypes can have set ranges that they accept, e.g. {@code 0..5}
+     * All primitive types that can have bounds should always become bounded types - even if no range is specified.
+     * This is to workaround quirks in Forge's config system.
      */
-    static ClassNode getWrappedType(ClassNode unwrappedType, boolean bounded) {
-        if (bounded) {
-            return switch (unwrappedType) {
-                case ClassHelper.Integer_TYPE, ClassHelper.int_TYPE -> Bounded.intValue
-                case ClassHelper.Long_TYPE, ClassHelper.long_TYPE -> Bounded.longValue
-                case ClassHelper.Double_TYPE, ClassHelper.double_TYPE -> Bounded.doubleValue
-                default -> Unbounded.genericValue
-                //default -> throw new Exception("Unsupported bound type: ${unwrappedType}")
-            }
-        } else {
-            switch (unwrappedType) {
-                case ClassHelper.Integer_TYPE, ClassHelper.int_TYPE -> Unbounded.intValue
-                case ClassHelper.Long_TYPE, ClassHelper.long_TYPE -> Unbounded.longValue
-                case ClassHelper.Double_TYPE, ClassHelper.double_TYPE -> Unbounded.doubleValue
-                case ClassHelper.Float_TYPE, ClassHelper.float_TYPE -> Unbounded.floatValue
-                case ClassHelper.Boolean_TYPE, ClassHelper.boolean_TYPE -> Unbounded.booleanValue
-                case ClassHelper.STRING_TYPE, ClassHelper.GSTRING_TYPE -> Unbounded.stringValue
-                default -> Unbounded.genericValue
-                //default -> throw new Exception("Unsupported unbound type: ${unwrappedType}")
-            }
+    enum Bounded implements ConfigValueType {
+        /** {@code ForgeConfigSpec.IntValue} treated as a byte */
+        BYTE_VALUE_TYPE(
+                ClassHelper.make(ForgeConfigSpec.IntValue),
+                GeneralUtils.constX(Byte.MIN_VALUE),
+                GeneralUtils.constX(Byte.MAX_VALUE),
+                true
+        ),
+
+        /** {@code ForgeConfigSpec.IntValue} treated as a short */
+        SHORT_VALUE_TYPE(
+                ClassHelper.make(ForgeConfigSpec.IntValue),
+                GeneralUtils.constX(Short.MIN_VALUE),
+                GeneralUtils.constX(Short.MAX_VALUE),
+                true
+        ),
+
+        /** {@code ForgeConfigSpec.IntValue} */
+        INT_VALUE_TYPE(
+                ClassHelper.make(ForgeConfigSpec.IntValue),
+                GeneralUtils.constX(Integer.MIN_VALUE),
+                GeneralUtils.constX(Integer.MAX_VALUE)
+        ),
+
+        /** {@code ForgeConfigSpec.LongValue} */
+        LONG_VALUE_TYPE(
+                ClassHelper.make(ForgeConfigSpec.LongValue),
+                GeneralUtils.constX(Long.MIN_VALUE),
+                GeneralUtils.constX(Long.MAX_VALUE)
+        ),
+
+        /** {@code ForgeConfigSpec.DoubleValue} treated as a float */
+        FLOAT_VALUE_TYPE(
+                ClassHelper.make(ForgeConfigSpec.DoubleValue),
+                GeneralUtils.constX(Float.NEGATIVE_INFINITY),
+                GeneralUtils.constX(Float.POSITIVE_INFINITY),
+                true
+        ),
+
+        /** {@code ForgeConfigSpec.DoubleValue} */
+        DOUBLE_VALUE_TYPE(
+                ClassHelper.make(ForgeConfigSpec.DoubleValue),
+                GeneralUtils.constX(Double.NEGATIVE_INFINITY),
+                GeneralUtils.constX(Double.POSITIVE_INFINITY)
+        )
+
+        final ClassNode classNode
+        final ConstantExpression minValue
+        final ConstantExpression maxValue
+        final boolean specialType
+        Bounded(ClassNode classNode, ConstantExpression minValue, ConstantExpression maxValue, boolean specialType = false) {
+            this.classNode = classNode
+            this.minValue = minValue
+            this.maxValue = maxValue
+            this.specialType = specialType
         }
+
+        @Override
+        ClassNode getClassNode() {
+            return this.classNode
+        }
+
+        /**
+         * Special bounded types are those that need special handling to correctly handle conversions to and from
+         * a lower precision type that Forge's config system doesn't support (e.g. float to double).
+         */
+//        class Special extends Bounded implements ConfigValueType {
+//            // A set of types that are suitable candidates for becoming a bounded type but need special handling
+//            static Set<ClassNode> specialPrimitiveCandidates = Set.of(
+//                    ClassHelper.Byte_TYPE, ClassHelper.byte_TYPE,
+//                    ClassHelper.Short_TYPE, ClassHelper.short_TYPE,
+//                    ClassHelper.Float_TYPE, ClassHelper.float_TYPE
+//            )
+//
+//            final FLOAT_VALUE_TYPE = new Special(
+//                    ClassHelper.make(ForgeConfigSpec.DoubleValue),
+//                    GeneralUtils.constX(Float.MIN_VALUE),
+//                    GeneralUtils.constX(Float.MAX_VALUE),
+//                    ClassHelper.float_TYPE
+//            )
+//
+//            final ClassNode specialType
+//            Special(ClassNode classNode, ConstantExpression minValue, ConstantExpression maxValue, ClassNode specialType) {
+//                super(classNode, minValue, maxValue)
+//                this.specialType = specialType
+//            }
+//
+//            @Override
+//            ClassNode getClassNode() {
+//                return this.classNode
+//            }
+//        }
     }
 
+    enum Unbounded implements ConfigValueType {
+        /** {@code ForgeConfigSpec.BooleanValue} */
+        BOOLEAN_VALUE_TYPE(ClassHelper.make(ForgeConfigSpec.BooleanValue)),
+
+        /** {@code ForgeConfigSpec.ConfigValue<String>} */
+        STRING_VALUE_TYPE(
+                GenericsUtils.makeClassSafeWithGenerics(
+                        ClassHelper.makeCached(ForgeConfigSpec.ConfigValue),
+                        new GenericsType(ClassHelper.STRING_TYPE)
+                )
+        ),
+
+        /** {@code ForgeConfigSpec.ConfigValue<?>} */
+        GENERIC_VALUE_TYPE(
+                GenericsUtils.makeClassSafeWithGenerics( // todo: switch to https://github.com/apache/groovy/commit/03886c5fe82cb8664da223f8cd82ada2c2c8b3c7 once new Groovy is out and on APLP
+                        ClassHelper.makeCached(ForgeConfigSpec.ConfigValue),
+                        GenericsUtils.buildWildcardType()
+                )
+        )
+
+        final ClassNode classNode
+        Unbounded(ClassNode classNode) {
+            this.classNode = classNode
+        }
+
+        @Override
+        ClassNode getClassNode() {
+            return this.classNode
+        }
+
+        static class Special {
+            // todo: investigate whether or not Character/char needs special handling
+            /** {@code ForgeConfigSpec.ConfigValue<Character>} */
+            static final ClassNode STRING_VALUE_TYPE = GenericsUtils.makeClassSafeWithGenerics(
+                    ClassHelper.makeCached(ForgeConfigSpec.ConfigValue),
+                    new GenericsType(ClassHelper.Character_TYPE)
+            )
+        }
+    }
 }

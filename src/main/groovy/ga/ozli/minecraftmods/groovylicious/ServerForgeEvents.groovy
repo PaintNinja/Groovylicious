@@ -20,6 +20,7 @@ class ServerForgeEvents {
     static void onTick(final TickEvent event) {
         every80Ticks++
         if (every80Ticks === 80) {
+            println SV(Configs.Common.foxRotation)
             every80Ticks = 0
         }
     }

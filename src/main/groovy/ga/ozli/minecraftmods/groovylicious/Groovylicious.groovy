@@ -2,6 +2,7 @@ package ga.ozli.minecraftmods.groovylicious
 
 import com.mojang.logging.LogUtils
 import ga.ozli.minecraftmods.groovylicious.api.gui.Colour
+import ga.ozli.minecraftmods.groovylicious.transform.GroovyliciousMojo
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
@@ -10,6 +11,7 @@ import org.slf4j.Logger
 
 import static ga.ozli.minecraftmods.groovylicious.api.gui.ColoursRegistry.instance as Colours
 
+@GroovyliciousMojo
 @CompileStatic//(extensions = ['ga.ozli.minecraftmods.groovylicious.transform.typecheckers.ColourTypeChecker'])
 @Mod(MOD_ID)
 class Groovylicious {
@@ -17,21 +19,14 @@ class Groovylicious {
     private static final Logger LOGGER = LogUtils.getLogger()
 
     Groovylicious() {
-//        AstBuilder builder = new AstBuilder()
-//        List<ASTNode> nodes = builder.buildFromString('println "${this.getModule().getName()}-common.toml"')
-//        nodes.each {
-//            println SV(it)
-//        }
 //        testColoursAPI()
-//        println ''
-
-//        println "ModID: ${ModLoadingContext.get().activeContainer.modId}"
         doDynamicStuff()
+        // config test
     }
 
     @CompileDynamic
     static void doDynamicStuff() {
-        Configs.Common.init()
+        //Configs.Common.init()
     }
 
     @CompileStatic

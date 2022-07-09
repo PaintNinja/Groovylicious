@@ -12,9 +12,9 @@ import java.lang.annotation.Target
 @Incubating
 @CompileStatic
 @Retention(RetentionPolicy.SOURCE)
-@Target([ElementType.TYPE, ElementType.FIELD])
-@GroovyASTTransformationClass('ga.ozli.minecraftmods.groovylicious.transform.config.ModConfigASTTransformation')
-@interface ModConfig {
+@Target(ElementType.TYPE)
+@GroovyASTTransformationClass('ga.ozli.minecraftmods.groovylicious.transform.config.ConfigASTTransformation')
+@interface Config {
     net.minecraftforge.fml.config.ModConfig.Type value() default net.minecraftforge.fml.config.ModConfig.Type.COMMON
-    String modId() default 'unknown'
+    String modId() default '(autoDetected)'
 }
