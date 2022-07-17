@@ -2,16 +2,16 @@ package ga.ozli.minecraftmods.groovylicious
 
 import com.mojang.logging.LogUtils
 import ga.ozli.minecraftmods.groovylicious.api.gui.Colour
-import ga.ozli.minecraftmods.groovylicious.transform.GroovyliciousMojo
+import ga.ozli.minecraftmods.groovylicious.dsl.ModsDotGroovy
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
+import net.minecraftforge.forgespi.language.IModInfo
 import net.thesilkminer.mc.austin.api.Mod
 import org.slf4j.Logger
 
 import static ga.ozli.minecraftmods.groovylicious.api.gui.ColoursRegistry.instance as Colours
 
-@GroovyliciousMojo
 @CompileStatic//(extensions = ['ga.ozli.minecraftmods.groovylicious.transform.typecheckers.ColourTypeChecker'])
 @Mod(MOD_ID)
 class Groovylicious {
@@ -21,12 +21,69 @@ class Groovylicious {
     Groovylicious() {
 //        testColoursAPI()
         doDynamicStuff()
-        // config test
     }
 
     @CompileDynamic
-    static void doDynamicStuff() {
+    void doDynamicStuff() {
         //Configs.Common.init()
+
+        ModsDotGroovy.makeToml {
+            license = "MIT"
+
+            // Alias for mods { mod { ... } }
+            info {
+                modId = MOD_ID
+                version = "${file.jarVersion}"
+                logoFile = 'logo.png'
+                author = 'Paint_Ninja'
+                description = '''
+                Delicious syntax sugar with the power of Groovy!
+                '''
+            }
+
+            // Similar to the above, but supports multiple mods
+            mods {
+                modInfo {
+                    modId = MOD_ID
+                    version = "${file.jarVersion}"
+                    logoFile = 'logo.png'
+                    author = 'Paint_Ninja'
+                    description = '''
+                    Delicious syntax sugar with the power of Groovy!
+                    '''
+                }
+            }
+
+            dependencies {
+                forge: '[40.1.60,)'
+                minecraft: '[1.18.2,1.19)'
+
+                forge {
+                    versionRange = "[40.1.60,)"
+                }
+
+                minecraft {
+                    versionRange = "[1.18.2,1.19)"
+                }
+
+                mod {
+                    modId = "examplemod"
+                    versionRange = "[1.0.0,1.1.0)"
+                    side = IModInfo.DependencySide.CLIENT
+                    mandatory = false
+                    ordering = IModInfo.Ordering.AFTER
+                }
+
+                // equiv to the mod dependency entry above
+                // todo: support Map<String, Closure> inside dependencies block
+//                examplemod: {
+//                    versionRange = "[1.0.0,1.1.0)"
+//                    side = IModInfo.DependencySide.CLIENT
+//                    mandatory = false
+//                    ordering = IModInfo.Ordering.AFTER
+//                }
+            }
+        }
     }
 
     @CompileStatic

@@ -16,7 +16,7 @@ import org.codehaus.groovy.transform.GroovyASTTransformation
  * Finds classes annotated with @Mojo/@Mod and adds @GroovyliciousMojo to them.<br>
  * <br>
  * Note: You do not need to copy this global transform if you want to add your own implied transforms to the Mojo class!
- * GroovyliciousMojo provides an API to do so without needing global transforms through the methods in MojoTransformRegistry.
+ * GroovyliciousMojo provides an API to do so without needing global transforms, through the methods in MojoTransformRegistry.
  * @see ga.ozli.minecraftmods.groovylicious.transform.mojo.GroovyliciousMojoTransformRegistry
  */
 @CompileStatic
