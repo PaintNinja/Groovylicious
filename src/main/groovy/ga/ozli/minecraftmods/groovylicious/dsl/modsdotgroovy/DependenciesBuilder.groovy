@@ -12,7 +12,7 @@ import static groovy.lang.Closure.DELEGATE_ONLY
 @CompileStatic
 class DependenciesBuilder extends HashMap {
 
-    private List<ImmutableModDependency> dependencies = []
+    private List<ModDependency> dependencies = []
 
     void mod(@DelegatesTo(value = ModDependency, strategy = DELEGATE_ONLY)
              @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.modsdotgroovy.ModDependency') final Closure closure) {
@@ -70,7 +70,7 @@ class DependenciesBuilder extends HashMap {
         mod(name, closure)
     }
 
-    List<ImmutableModDependency> build() {
+    List<ModDependency> build() {
         this.each { key, value ->
             key = key as String
 

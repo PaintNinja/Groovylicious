@@ -1,8 +1,9 @@
 package ga.ozli.minecraftmods.groovylicious.dsl
 
 import ga.ozli.minecraftmods.groovylicious.dsl.modsdotgroovy.DependenciesBuilder
-import ga.ozli.minecraftmods.groovylicious.dsl.modsdotgroovy.ImmutableModDependency
+
 import ga.ozli.minecraftmods.groovylicious.dsl.modsdotgroovy.ImmutableModInfo
+import ga.ozli.minecraftmods.groovylicious.dsl.modsdotgroovy.ModDependency
 import ga.ozli.minecraftmods.groovylicious.dsl.modsdotgroovy.ModInfoBuilder
 import ga.ozli.minecraftmods.groovylicious.dsl.modsdotgroovy.ModsBuilder
 import groovy.transform.CompileStatic
@@ -17,7 +18,7 @@ import static groovy.lang.Closure.DELEGATE_FIRST
 class ModsDotGroovy {
 
     private List<ImmutableModInfo> mods = []
-    private List<ImmutableModDependency> dependencies = []
+    private List<ModDependency> dependencies = []
 
     String loaderVersion = '[1,)'
 

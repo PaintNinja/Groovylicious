@@ -6,8 +6,10 @@ import org.apache.groovy.lang.annotation.Incubating
 
 @Incubating
 @CompileStatic
-class MinecraftDependency implements Dependency, ForceMandatoryTrait {
+class MinecraftDependency implements Dependency {
     final String modId = 'minecraft'
+    final boolean mandatory = true
+    final IModInfo.Ordering ordering = IModInfo.Ordering.NONE
 
     String versionRange
 

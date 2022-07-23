@@ -6,8 +6,10 @@ import org.apache.groovy.lang.annotation.Incubating
 
 @Incubating
 @CompileStatic
-class ForgeDependency implements Dependency, ForceMandatoryTrait {
+class ForgeDependency implements Dependency {
     final String modId = 'forge'
+    final boolean mandatory = true
+    final IModInfo.Ordering ordering = IModInfo.Ordering.NONE
 
     String versionRange
 

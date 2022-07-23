@@ -17,7 +17,7 @@ interface Dependency {
     default IModInfo.DependencySide side = IModInfo.DependencySide.BOTH
 
     @Requires({ this.modId && this.versionRange })
-    default ImmutableModDependency build() {
-        return new ImmutableModDependency(modId, mandatory, versionRange, ordering, side)
+    default ModDependency build() {
+        return new ModDependency(modId, mandatory, versionRange, ordering, side)
     }
 }

@@ -1,11 +1,9 @@
 package ga.ozli.minecraftmods.groovylicious.dsl.modsdotgroovy
 
-import groovy.transform.Canonical
 import groovy.transform.CompileStatic
 import net.minecraftforge.forgespi.language.IModInfo
 import org.apache.groovy.lang.annotation.Incubating
 
-@Canonical
 @Incubating
 @CompileStatic
 class ModDependency implements Dependency {
@@ -27,4 +25,14 @@ class ModDependency implements Dependency {
      * Side this dependency is applied on - BOTH, CLIENT or SERVER
      */
     IModInfo.DependencySide side
+
+    ModDependency() {}
+
+    ModDependency(String modId, boolean mandatory, String versionRange, IModInfo.Ordering ordering, IModInfo.DependencySide side) {
+        this.modId = modId
+        this.mandatory = mandatory
+        this.versionRange = versionRange
+        this.ordering = ordering
+        this.side = side
+    }
 }

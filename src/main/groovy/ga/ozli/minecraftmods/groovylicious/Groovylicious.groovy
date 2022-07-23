@@ -20,7 +20,7 @@ class Groovylicious {
 
     Groovylicious() {
 //        testColoursAPI()
-        doDynamicStuff()
+//        doDynamicStuff()
     }
 
     @CompileDynamic
