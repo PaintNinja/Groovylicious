@@ -144,10 +144,19 @@ tasks.named('jar', Jar) {
     finalizedBy 'reobfJar'
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+sourcesJar {
+    duplicatesStrategy DuplicatesStrategy.INCLUDE
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifact jar
+            artifacts = [jar, javadocJar, sourcesJar]
         }
     }
     repositories {
@@ -155,6 +164,8 @@ publishing {
             name = 'ModdingInquisitionMavenRepo'
             url = 'https://maven.moddinginquisition.org/releases'
             credentials {
+                username = findProperty('inquisitionMavenUser') ?: ''
+                password = findProperty('inquisitionMavenPassword') ?: ''
             }
         }
     }
