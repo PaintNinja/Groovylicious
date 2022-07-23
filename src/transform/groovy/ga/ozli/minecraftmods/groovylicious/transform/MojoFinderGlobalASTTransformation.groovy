@@ -23,9 +23,9 @@ import org.codehaus.groovy.transform.GroovyASTTransformation
 @GroovyASTTransformation(phase = CompilePhase.SEMANTIC_ANALYSIS)
 class MojoFinderGlobalASTTransformation implements ASTTransformation {
 
-    private static final AnnotationNode MOD_ANNOTATION = new AnnotationNode(ClassHelper.make(Mod))
-    private static final AnnotationNode MOJO_ANNOTATION = new AnnotationNode(ClassHelper.make(Mojo))
-    private static final AnnotationNode GROOVYLICIOUS_MOJO_ANNOTATION = new AnnotationNode(ClassHelper.make(Mojo))
+    private static final ClassNode MOD_ANNOTATION_CLASS = ClassHelper.make(Mod)
+    private static final ClassNode MOJO_ANNOTATION_CLASS = ClassHelper.make(Mojo)
+    private static final AnnotationNode GROOVYLICIOUS_MOJO_ANNOTATION = new AnnotationNode(ClassHelper.make(GroovyliciousMojo))
 
     private static final boolean DEBUG = false
 
@@ -36,8 +36,8 @@ class MojoFinderGlobalASTTransformation implements ASTTransformation {
             final List<AnnotationNode> annotations = classNode.annotations
             if (annotations.isEmpty()) continue
 
-            final boolean hasMojo = annotations.find {
-                it == MOD_ANNOTATION || it == MOJO_ANNOTATION
+            final boolean hasMojo = annotations*.classNode.find {
+                it == MOD_ANNOTATION_CLASS || it == MOJO_ANNOTATION_CLASS
             }
 
             if (hasMojo) {

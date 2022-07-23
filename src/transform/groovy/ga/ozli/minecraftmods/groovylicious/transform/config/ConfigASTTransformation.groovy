@@ -79,7 +79,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
             // If we needed to generate our own init method, we'll probably need to handle calling it ourselves too...
             // Let's see if any of the outer class are annotated with @Mojo or @Mod.
             boolean foundModMainClass = false
-            println SV(configDataClass.outerClasses)
+            if (DEBUG) println SV(configDataClass.outerClasses)
             if (!configDataClass.outerClasses.empty) {
                 configDataClass.outerClasses.each { outerClass ->
                     if (DEBUG) println SV(outerClass)

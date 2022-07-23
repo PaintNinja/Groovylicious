@@ -7,7 +7,7 @@ plugins {
     id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
 }
 
-version = '1.19-0.2.0'
+version = '1.19-0.2.0-SNAPSHOT'
 group = 'ga.ozli.minecraftmods.groovylicious'
 archivesBaseName = 'groovylicious'
 
@@ -164,7 +164,7 @@ publishing {
     repositories {
         maven {
             name = 'ModdingInquisitionMavenRepo'
-            url = 'https://maven.moddinginquisition.org/releases'
+            url = 'https://maven.moddinginquisition.org/snapshots'
             credentials {
                 username = findProperty('inquisitionMavenUser') ?: ''
                 password = findProperty('inquisitionMavenPassword') ?: ''
