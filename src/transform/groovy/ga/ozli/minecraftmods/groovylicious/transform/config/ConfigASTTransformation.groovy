@@ -79,19 +79,22 @@ class ConfigASTTransformation extends AbstractASTTransformation {
             // If we needed to generate our own init method, we'll probably need to handle calling it ourselves too...
             // Let's see if any of the outer class are annotated with @Mojo or @Mod.
             boolean foundModMainClass = false
-            configDataClass.outerClasses.each { outerClass ->
-                if (DEBUG) println SV(outerClass)
-                final boolean isModMainClass = outerClass.annotations*.classNode.find { it == MOJO_TYPE || it == MOD_TYPE }
+            println SV(configDataClass.outerClasses)
+            if (!configDataClass.outerClasses.empty) {
+                configDataClass.outerClasses.each { outerClass ->
+                    if (DEBUG) println SV(outerClass)
+                    final boolean isModMainClass = outerClass.annotations*.classNode.find { it == MOJO_TYPE || it == MOD_TYPE }
 
-                // We found an outer class annotated with @Mojo or @Mod, so we know that this configDataClass is inside
-                // the Mod's main class and can add a static { configDataClass.init() } to it
-                if (isModMainClass) {
-                    foundModMainClass = true
-                    outerClass.addStaticInitializerStatements([
-                            GeneralUtils.stmt(
-                                    GeneralUtils.callX(new ClassExpression(configDataClass), 'init')
-                            )
-                    ], false)
+                    // We found an outer class annotated with @Mojo or @Mod, so we know that this configDataClass is inside
+                    // the Mod's main class and can add a static { configDataClass.init() } to it
+                    if (isModMainClass) {
+                        foundModMainClass = true
+                        outerClass.addStaticInitializerStatements([
+                                GeneralUtils.stmt(
+                                        GeneralUtils.callX(new ClassExpression(configDataClass), 'init')
+                                )
+                        ], false)
+                    }
                 }
             }
             if (!foundModMainClass) {

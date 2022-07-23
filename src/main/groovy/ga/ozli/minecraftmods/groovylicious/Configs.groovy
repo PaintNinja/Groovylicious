@@ -9,7 +9,7 @@ import net.minecraftforge.common.ForgeConfigSpec
 @CompileStatic
 class Configs {
 
-    @Config
+    //@Config
     static class Client { // this is saved as groovylicious-client.toml because the class name contains "Client"
         static boolean enable = true
     }

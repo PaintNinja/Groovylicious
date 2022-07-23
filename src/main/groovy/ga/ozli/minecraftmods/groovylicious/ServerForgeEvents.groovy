@@ -16,7 +16,7 @@ import static net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus
 class ServerForgeEvents {
     static int every80Ticks = 0
 
-    @SubscribeEvent
+    //@SubscribeEvent
     static void onTick(final TickEvent event) {
         every80Ticks++
         if (every80Ticks === 80) {

@@ -7,8 +7,7 @@ import net.minecraft.client.gui.components.Button
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.TitleScreen
 import net.minecraftforge.api.distmarker.Dist
-import net.minecraftforge.client.event.ScreenOpenEvent
-import net.minecraftforge.eventbus.api.SubscribeEvent
+import net.minecraftforge.client.event.ScreenEvent
 import net.thesilkminer.mc.austin.api.EventBus
 import net.thesilkminer.mc.austin.api.EventBusSubscriber
 
@@ -18,10 +17,10 @@ import static ga.ozli.minecraftmods.groovylicious.api.gui.ColoursRegistry.instan
 @EventBusSubscriber(modId = Groovylicious.MOD_ID, bus = EventBus.FORGE, dist = Dist.CLIENT)
 class ClientForgeEvents {
 
-    @SubscribeEvent
-    static void onScreenOpen(final ScreenOpenEvent event) {
-        if (event.screen instanceof TitleScreen)
-            event.screen = testScreenDSL()
+    //@SubscribeEvent
+    static void onScreenOpen(final ScreenEvent.Opening event) {
+        if (event.currentScreen instanceof TitleScreen)
+            event.newScreen = testScreenDSL()
     }
 
     static Screen testScreenDSL() {

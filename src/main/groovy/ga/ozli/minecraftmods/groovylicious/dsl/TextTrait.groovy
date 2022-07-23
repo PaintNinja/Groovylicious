@@ -1,9 +1,8 @@
 package ga.ozli.minecraftmods.groovylicious.dsl
 
+import ga.ozli.minecraftmods.groovylicious.api.StringUtils
 import groovy.transform.CompileStatic
 import net.minecraft.network.chat.Component
-import net.minecraft.network.chat.TextComponent
-import net.minecraft.network.chat.TranslatableComponent
 
 import javax.annotation.Nonnull
 
@@ -27,7 +26,6 @@ trait TextTrait {
      * @param text
      */
     void text(@Nonnull final String text) {
-        if (text.contains ' ') this.text = new TextComponent(text)
-        else this.text = new TranslatableComponent(text)
+        this.text = StringUtils.stringToComponent(text)
     }
 }

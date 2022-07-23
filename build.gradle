@@ -1,12 +1,13 @@
 plugins {
     id 'groovy'
     id 'eclipse'
+    id 'maven-publish'
     id 'net.minecraftforge.gradle' version '5.1.+'
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
     id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
 }
 
-version = '1.18.2-0.2.0'
+version = '1.19-0.2.0'
 group = 'ga.ozli.minecraftmods.groovylicious'
 archivesBaseName = 'groovylicious'
 
@@ -16,12 +17,13 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 
 minecraft {
-    mappings channel: 'parchment', version: '2022.06.05-1.18.2'
+    mappings channel: 'parchment', version: '1.18.2-2022.07.17-1.19'
 
     runs {
         configureEach {
             workingDirectory project.file('run')
             property 'forge.logging.console.level', 'info'
+            property 'forge.enabledGameTestNamespaces', archivesBaseName
 
             mods {
                 groovylicious {
@@ -39,7 +41,6 @@ configurations {
     library
     implementation.extendsFrom library
 }
-
 minecraft.runs.all {
     lazyToken('minecraft_classpath') {
         configurations.library.copyRecursive().resolve().collect({ it.absolutePath }).join(File.pathSeparator)
@@ -94,36 +95,30 @@ repositories {
             includeGroup 'curse.maven'
         }
     }
+//    maven {
+//        name 'BlameJared'
+//        url 'https://maven.blamejared.com'
+//    }
     maven {
-        name 'BlameJared'
-        url 'https://maven.blamejared.com'
+        name = 'Modding Inquisition Snapshots'
+        url = 'https://maven.moddinginquisition.org/snapshots'
     }
 }
 
 dependencies {
     // Forge
-    minecraft 'net.minecraftforge:forge:1.18.2-40.1.60'
+    minecraft 'net.minecraftforge:forge:1.19-41.0.110'
 
     // Austin's Powerful Language Provider: Keeping it Groovy, baby!
-    implementation 'net.thesilkminer.mc.austin:aplp-1.18.2:1.0.1'
-    transformImplementation 'net.thesilkminer.mc.austin:aplp-1.18.2:1.0.1'
-
-    // Add Groovy to the game
-    library 'org.apache.groovy:groovy:4.0.1'
-    library 'org.apache.groovy:groovy-macro:4.0.1'
-    library 'org.apache.groovy:groovy-macro-library:4.0.1'
-    library 'org.apache.groovy:groovy-templates:4.0.1'
-    library 'org.apache.groovy:groovy-typecheckers:4.0.1'
-    library 'org.apache.groovy:groovy-contracts:4.0.1'
-
-    // LazyDFU in dev env - speeds up initial load times at the cost of lag spikes in-game,
-    // fine for me as Groovylicious doesn't add any in-game APIs yet
-    runtimeOnly 'curse.maven:lazydfu-460819:3544496'
+    library compileOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.1')
+    library runtimeOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.1:all')
+    library transformCompileOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.1')
+    library transformRuntimeOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.1:all')
 
     // Ksyxis in dev env - speeds up initial server load times by lazy loading spawn chunks at
     // the cost of lag on the server when someone joins from previously empty - fine for me as
     // Groovylicious doesn't add any in-game APIs yet
-    runtimeOnly 'curse.maven:ksyxis-537533:3502166'
+    runtimeOnly 'curse.maven:ksyxis-537533:3502167'
 }
 
 processResources {
@@ -136,7 +131,7 @@ tasks.named('jar', Jar) {
 
     manifest {
         attributes([
-                'Specification-Title': 'Groovylicious',
+                'Specification-Title': archivesBaseName,
                 'Specification-Vendor': 'Paint_Ninja',
                 'Specification-Version': '1',
                 'Implementation-Title': project.name,
@@ -147,6 +142,22 @@ tasks.named('jar', Jar) {
     }
 
     finalizedBy 'reobfJar'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact jar
+        }
+    }
+    repositories {
+        maven {
+            name = 'ModdingInquisitionMavenRepo'
+            url = 'https://maven.moddinginquisition.org/snapshots'
+            credentials {
+            }
+        }
+    }
 }
 
 tasks.withType(GroovyCompile).configureEach { GroovyCompile task ->
