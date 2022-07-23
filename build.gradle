@@ -144,19 +144,21 @@ tasks.named('jar', Jar) {
     finalizedBy 'reobfJar'
 }
 
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
+tasks.register('sourcesJar', Jar) {
+    dependsOn compileGroovy
 
-sourcesJar {
-    duplicatesStrategy DuplicatesStrategy.INCLUDE
+    archiveClassifier = 'sources'
+
+    from sourceSets.main.allSource
+    from sourceSets.transform.allSource
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifacts = [jar, javadocJar, sourcesJar]
+            artifacts = [jar, sourcesJar]
         }
     }
     repositories {
