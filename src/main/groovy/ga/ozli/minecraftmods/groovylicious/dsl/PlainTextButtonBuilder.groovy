@@ -1,16 +1,13 @@
 package ga.ozli.minecraftmods.groovylicious.dsl
 
-import ga.ozli.minecraftmods.groovylicious.api.gui.Colour
+
 import ga.ozli.minecraftmods.groovylicious.api.gui.EnhancedPlainTextButton
 import ga.ozli.minecraftmods.groovylicious.api.gui.ExtensibleScreen
 import groovy.contracts.Requires
 import groovy.transform.CompileStatic
-import net.minecraft.ChatFormatting
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.components.Button
 import org.apache.groovy.lang.annotation.Incubating
-
-import static ga.ozli.minecraftmods.groovylicious.api.gui.ColoursRegistry.instance as Colours
 
 @Incubating
 @CompileStatic

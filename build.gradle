@@ -19,6 +19,8 @@ println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty '
 minecraft {
     mappings channel: 'parchment', version: '1.18.2-2022.07.17-1.19'
 
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
     runs {
         configureEach {
             workingDirectory project.file('run')
@@ -126,12 +128,12 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.19-41.0.110'
 
     // Austin's Powerful Language Provider: Keeping it Groovy, baby!
-    library compileOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.1') // main sourceSet
-    library runtimeOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.1:all')
-    library extensionCompileOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.1') // extension sourceSet
-    library extensionRuntimeOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.1:all')
-    library transformCompileOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.1') // transform sourceSet
-    library transformRuntimeOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.1:all')
+    library compileOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2') // main sourceSet
+    library runtimeOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2:all')
+    library extensionCompileOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2') // extension sourceSet
+    library extensionRuntimeOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2:all')
+    library transformCompileOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2') // transform sourceSet
+    library transformRuntimeOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2:all')
 
     // Ksyxis in dev env - speeds up initial server load times by lazy loading spawn chunks at
     // the cost of lag on the server when someone joins from previously empty - fine for me as

@@ -1,6 +1,7 @@
 package ga.ozli.minecraftmods.groovylicious
 
 import com.mojang.blaze3d.vertex.PoseStack
+import ga.ozli.minecraftmods.groovylicious.api.gui.Alignment
 import ga.ozli.minecraftmods.groovylicious.dsl.ScreenBuilder
 import groovy.transform.CompileStatic
 import net.minecraft.client.gui.components.Button
@@ -8,6 +9,7 @@ import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.TitleScreen
 import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.client.event.ScreenEvent
+import net.minecraftforge.eventbus.api.SubscribeEvent
 import net.thesilkminer.mc.austin.api.EventBus
 import net.thesilkminer.mc.austin.api.EventBusSubscriber
 
@@ -19,7 +21,7 @@ class ClientForgeEvents {
 
     //@SubscribeEvent
     static void onScreenOpen(final ScreenEvent.Opening event) {
-        if (event.currentScreen instanceof TitleScreen)
+        if (event.newScreen instanceof TitleScreen)
             event.newScreen = testScreenDSL()
     }
 
@@ -31,8 +33,10 @@ class ClientForgeEvents {
 
             button {
                 text "Test button"
-                position x: 10,
+                position x: 200,
                          y: 10
+
+                alignment Alignment.RIGHT
 
                 size width: 100,
                      height: 20
@@ -50,6 +54,7 @@ class ClientForgeEvents {
                 text "Lorem ipsum"
                 position x: 10, y: 40
                 textColour Colours.AQUA
+                alignment Alignment.RIGHT
             }
 
             editBox {

@@ -52,6 +52,10 @@ class LabelBuilder implements PositionTrait, SizeTrait, TextTrait, TextColourTra
             if (this.alignment === Alignment.LEFT) {
                 if (this.drawShadow) label.renderLeftAligned(poseStack, this.position.x, this.position.y, this.lineHeight, this.textColour.get())
                 else label.renderLeftAlignedNoShadow(poseStack, this.position.x, this.position.y, this.lineHeight, this.textColour.get())
+            } else if (this.alignment === Alignment.RIGHT) { // todo: should this be right-aligned relative to the right edge of the screen?
+                this.position.x = this.position.x - label.width
+                if (this.drawShadow) label.renderLeftAligned(poseStack, this.position.x, this.position.y, this.lineHeight, this.textColour.get())
+                else label.renderLeftAlignedNoShadow(poseStack, this.position.x, this.position.y, this.lineHeight, this.textColour.get())
             } else {
                 label.renderCentered(poseStack, this.position.x, this.position.y, this.lineHeight, this.textColour.get())
             }

@@ -18,5 +18,6 @@ class Groovylicious {
 
     Groovylicious() {
         LOGGER.info "${MOD_ID.capitalize()} starting"
+        LOGGER.info SV(GroovySystem.version)
     }
 }

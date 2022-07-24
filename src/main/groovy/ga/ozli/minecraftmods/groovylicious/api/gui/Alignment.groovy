@@ -7,6 +7,6 @@ import groovy.transform.stc.POJO
 @CompileStatic
 enum Alignment {
     LEFT,
-    CENTRE
-    //RIGHT // TODO
+    CENTRE,
+    RIGHT
 }
