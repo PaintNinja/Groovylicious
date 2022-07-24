@@ -1,25 +1,29 @@
 package ga.ozli.minecraftmods.groovylicious.dsl
 
+import ga.ozli.minecraftmods.groovylicious.api.gui.Colour
+import ga.ozli.minecraftmods.groovylicious.api.gui.EnhancedPlainTextButton
 import ga.ozli.minecraftmods.groovylicious.api.gui.ExtensibleScreen
 import groovy.contracts.Requires
 import groovy.transform.CompileStatic
+import net.minecraft.ChatFormatting
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.components.Button
-import net.minecraft.client.gui.components.PlainTextButton
 import org.apache.groovy.lang.annotation.Incubating
+
+import static ga.ozli.minecraftmods.groovylicious.api.gui.ColoursRegistry.instance as Colours
 
 @Incubating
 @CompileStatic
-class PlainTextButtonBuilder extends ButtonBuilder {
+class PlainTextButtonBuilder extends ButtonBuilder implements TextColourTrait {
 
     @Requires({ this.position && this.size && this.text })
-    PlainTextButton buildPlainTextButton() {
-        return new PlainTextButton(this.position.x, this.position.y, this.size.width, this.size.height, this.text, this.onPress, Minecraft.instance.font)
+    EnhancedPlainTextButton buildPlainTextButton() {
+        return new EnhancedPlainTextButton(this.position.x, this.position.y, this.size.width, this.size.height, this.text, this.onPress, Minecraft.instance.font, textColour)
     }
 
     @Requires({ this.position && this.size && this.text })
-    PlainTextButton buildPlainTextButton(final ExtensibleScreen extensibleScreen) {
-        return new PlainTextButton(this.position.x, this.position.y, this.size.width, this.size.height, this.text, this.onPress, extensibleScreen.font)
+    EnhancedPlainTextButton buildPlainTextButton(final ExtensibleScreen extensibleScreen) {
+        return new EnhancedPlainTextButton(this.position.x, this.position.y, this.size.width, this.size.height, this.text, this.onPress, extensibleScreen.font, textColour)
     }
 
     @Requires({ this.position && this.size && this.text })

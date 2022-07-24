@@ -55,7 +55,7 @@ class ColoursRegistry implements Map<String, Colour> {
     Colour EDITBOX_TEXTUNEDITABLE = new Colour(7368816)
     Colour EDITBOX_CURSORINSERT = new Colour(-3092272)
     Colour EDITBOX_BORDER = new Colour(-6250336)
-    Colour EDITBOX_BORDERFOCUSED = new Colour(-1)
+    Colour EDITBOX_BORDERFOCUSED = WHITE
     Colour EDITBOX_BACKGROUND = new Colour(16777216)
     Colour EDITBOX_SUGGESTION = new Colour(-8355712)
 

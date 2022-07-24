@@ -15,43 +15,14 @@ import static ga.ozli.minecraftmods.groovylicious.api.gui.ColoursRegistry.instan
 
 @Incubating
 @CompileStatic
-class LabelBuilder implements PositionTrait, SizeTrait, TextTrait {
+class LabelBuilder implements PositionTrait, SizeTrait, TextTrait, TextColourTrait {
     // TODO: multi-line text support
     Alignment alignment = Alignment.LEFT
-    Colour textColour = Colours.WHITE
     int lineHeight = 9
     boolean drawShadow = true // TODO: centre-aligned with shadow
 
     void alignment(final Alignment alignment) {
         this.alignment = alignment
-    }
-
-    void textColour(final Colour colour) {
-        this.textColour = colour
-    }
-
-    void textColour(final int packed) {
-        this.textColour = Colour.of(packed)
-    }
-
-    void textColour(final int red, final int green, final int blue) {
-        this.textColour = Colour.of(red, green, blue)
-    }
-
-    void textColour(final int alpha, final int red, final int green, final int blue) {
-        this.textColour = Colour.of(alpha, red, green, blue)
-    }
-
-    void textColour(final int[] argb) {
-        this.textColour = Colour.of(argb)
-    }
-
-    void textColour(final ChatFormatting colour) {
-        this.textColour = Colour.of(colour)
-    }
-
-    void textColour(final Map args) {
-        this.textColour = new Colour(args)
     }
 
     @Requires({ lineHeight >= 0 })
