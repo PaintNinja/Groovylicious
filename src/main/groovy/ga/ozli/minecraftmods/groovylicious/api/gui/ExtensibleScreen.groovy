@@ -3,7 +3,6 @@ package ga.ozli.minecraftmods.groovylicious.api.gui
 import com.mojang.blaze3d.vertex.PoseStack
 import ga.ozli.minecraftmods.groovylicious.api.StringUtils
 import groovy.transform.CompileStatic
-import net.minecraft.Util
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.components.Widget
 import net.minecraft.client.gui.components.events.GuiEventListener
@@ -45,11 +44,11 @@ class ExtensibleScreen extends Screen {
 
     @Override
     void render(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
-        if (!onPreRender.isEmpty()) onPreRender.each { it.call(this, poseStack) }
+        if (!onPreRender.isEmpty()) onPreRender.each { it.call(this, poseStack, mouseX, mouseY, partialTick) }
         if (drawBackground) this.renderBackground(poseStack)
-        onRender.each { it.call(this, poseStack) }
+        onRender.each { it.call(this, poseStack, mouseX, mouseY, partialTick) }
         super.render(poseStack, mouseX, mouseY, partialTick)
-        if (!onPostRender.isEmpty()) onPostRender.each { it.call(this, poseStack) }
+        if (!onPostRender.isEmpty()) onPostRender.each { it.call(this, poseStack, mouseX, mouseY, partialTick) }
     }
 
     // --- Access widening ---

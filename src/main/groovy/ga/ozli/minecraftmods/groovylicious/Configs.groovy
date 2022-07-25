@@ -14,7 +14,7 @@ class Configs {
         static boolean enable = true
     }
 
-    @Config
+    //@Config
     static class Common {
         // This is optional:
         static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()

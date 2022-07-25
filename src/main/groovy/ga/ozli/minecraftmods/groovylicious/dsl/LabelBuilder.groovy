@@ -47,7 +47,7 @@ class LabelBuilder implements PositionTrait, SizeTrait, TextTrait, TextColourTra
     // Note: this closure is meant to be run inside a Screen's render method, such as ExtensibleScreen's onPreRender/onRender/onPostRender
     @Requires({ this.text && this.position && this.textColour }) // make sure the text, position and colour aren't null
     Closure buildClosure() {
-        return { ExtensibleScreen screenInstance, PoseStack poseStack ->
+        return { ExtensibleScreen screenInstance, PoseStack poseStack, int mouseX, int mouseY, float partialTick ->
             final MultiLineLabel label = this.buildLabel(screenInstance)
             if (this.alignment === Alignment.LEFT) {
                 if (this.drawShadow) label.renderLeftAligned(poseStack, this.position.x, this.position.y, this.lineHeight, this.textColour.get())
