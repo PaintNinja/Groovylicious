@@ -11,6 +11,7 @@ import net.minecraft.client.gui.screens.ConfirmLinkScreen
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
 
+import javax.annotation.Nullable
 import java.nio.file.Path
 
 @CompileStatic
@@ -23,6 +24,9 @@ class ExtensibleScreen extends Screen {
     final List<Closure> onPreRender = []
     final List<Closure> onRender = []
     final List<Closure> onPostRender = []
+
+    @Nullable
+    Screen returnToScreen = null
 
     boolean drawBackground = true
 
