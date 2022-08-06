@@ -71,7 +71,7 @@ class GroovyDocParser {
         String multiLinePlainText = ''
         plainText.eachLine {
             // strip javadoc taglets in the format: @tag content
-            it.replaceAll(/^@(?<tag>\w+|\d+)(?<content>\s([^\n]+|[^\r]+))/, '').stripTrailing()
+            it = it.replaceAll(/^@(?<tag>\w+|\d+)\s(?<content>.+)\s?(?:[^\n]+|[^\r]+)?/, '').stripTrailing()
 
             if (it != '')
                 multiLinePlainText += '\n' + it
@@ -90,12 +90,12 @@ class GroovyDocParser {
         final Map<String, String> tags = [:]
         htmlFreeText.eachLine { line ->
             // parse javadoc taglets in the format: {@tag content}
-            Matcher bracketedTagMatcher = line =~ /(.+)?\{@(?<tag>\w+|\d+)\s(?<content>.+)}(.+)?/
+            Matcher bracketedTagMatcher = line =~ /(.+)?\{@(?<tag>\w+|\d+)\s(?<content>.+)}(?:.+)?/
             if (bracketedTagMatcher.matches()) {
                 tags[bracketedTagMatcher.group('tag')] = bracketedTagMatcher.group('content')
             } else {
                 // parse javadoc taglets in the format: @tag content
-                Matcher bracketlessTagMatcher = line =~ /^@(?<tag>\w+|\d+)(?<content>\s([^\n]+|[^\r]+))/
+                Matcher bracketlessTagMatcher = line =~ /^@(?<tag>\w+|\d+)\s(?<content>.+)\s?(?:[^\n]+|[^\r]+)?/
                 if (bracketlessTagMatcher.matches()) {
                     tags[bracketlessTagMatcher.group('tag')] = bracketlessTagMatcher.group('content')
                 }

@@ -15,6 +15,21 @@ class Configs {
     }
 
     //@Config
+    static class RangeTest {
+        /**
+         * Ranged short test
+         * {@range 12..2000}
+         */
+        static short rangedShort = 120
+
+        /**
+         * Ranged int test
+         * @range 13..3000
+         */
+        static int rangedInt = 130
+    }
+
+    //@Config
     static class Common {
         // This is optional:
         static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()
