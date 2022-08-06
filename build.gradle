@@ -7,7 +7,7 @@ plugins {
     id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
 }
 
-version = '1.19-0.2.0-SNAPSHOT'
+version = '1.19.2-0.2.0-SNAPSHOT'
 group = 'ga.ozli.minecraftmods.groovylicious'
 archivesBaseName = 'groovylicious'
 
@@ -63,19 +63,6 @@ sourceSets {
         compileClasspath += configurations.getByName('minecraft')
     }
 
-    extension {
-        groovy {
-            srcDir 'src/extension/groovy'
-        }
-
-        resources.srcDirs = []
-        resources {
-            srcDir 'src/extension/resources'
-        }
-
-        compileClasspath += configurations.getByName('minecraft')
-    }
-
     main {
         groovy {
             srcDir 'src/main/groovy'
@@ -88,9 +75,6 @@ sourceSets {
 
         compileClasspath += sourceSets.transform.output
         runtimeClasspath += sourceSets.transform.output
-
-        compileClasspath += sourceSets.extension.output
-        runtimeClasspath += sourceSets.extension.output
     }
 }
 
@@ -125,13 +109,11 @@ repositories {
 
 dependencies {
     // Forge
-    minecraft 'net.minecraftforge:forge:1.19-41.0.110'
+    minecraft 'net.minecraftforge:forge:1.19.2-43.0.0'
 
     // Austin's Powerful Language Provider: Keeping it Groovy, baby!
     library compileOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2') // main sourceSet
     library runtimeOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2:all')
-    library extensionCompileOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2') // extension sourceSet
-    library extensionRuntimeOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2:all')
     library transformCompileOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2') // transform sourceSet
     library transformRuntimeOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2:all')
 
@@ -150,7 +132,7 @@ ext {
             'Specification-Title': archivesBaseName,
             'Specification-Vendor': 'Paint_Ninja',
             'Specification-Version': '1',
-            'Implementation-Title': project.name,
+            'Implementation-Title': archivesBaseName,
             'Implementation-Version': project.jar.archiveVersion,
             'Implementation-Vendor': 'Paint_Ninja',
             'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
@@ -159,7 +141,6 @@ ext {
 
 tasks.named('jar', Jar) {
     from sourceSets.transform.output
-    from sourceSets.extension.output
     from sourceSets.main.output
 
     manifest {
@@ -187,7 +168,6 @@ tasks.register('sourcesJar', Jar) {
     archiveClassifier = 'sources'
 
     from sourceSets.transform.allSource
-    from sourceSets.extension.allSource
     from sourceSets.main.allSource
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -218,4 +198,4 @@ tasks.withType(GroovyCompile).configureEach { GroovyCompile task ->
 }
 
 compileGroovy.groovyOptions.configurationScript = file('src/transform/groovy/ga/ozli/minecraftmods/groovylicious/transform/groovycConfig.groovy')
-compileGroovy.groovyOptions.optimizationOptions.'groovydoc' = true
+compileGroovy.groovyOptions.optimizationOptions.groovydoc = true

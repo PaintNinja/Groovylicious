@@ -1,10 +1,8 @@
 package ga.ozli.minecraftmods.groovylicious
 
-import com.mojang.logging.LogUtils
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import groovy.transform.stc.POJO
-import net.minecraft.util.Mth
 import net.thesilkminer.mc.austin.api.Mod
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

@@ -9,7 +9,6 @@ import net.minecraftforge.fml.ModList
 
 import java.util.function.BiFunction
 import java.util.function.Function
-import java.util.function.Supplier
 
 @CompileStatic
 class ConfigUtils {

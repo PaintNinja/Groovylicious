@@ -1,0 +1,7 @@
+moduleName=Groovylicious LogUtils Extension
+moduleVersion=0.2.0
+staticExtensionClasses=ga.ozli.minecraftmods.groovylicious.extension.LogUtilsExtension
+extensionClasses=ga.ozli.minecraftmods.groovylicious.extension.ModContainerExtension
+
+# Note: All extension methods have GroovyDoc comments containing "@author x via Groovylicious" to indicate
+# that a given feature originated from Groovylicious and not Forge or Minecraft itself.

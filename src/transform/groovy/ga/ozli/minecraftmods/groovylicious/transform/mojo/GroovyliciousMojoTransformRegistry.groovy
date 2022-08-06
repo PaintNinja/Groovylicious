@@ -10,7 +10,7 @@ class GroovyliciousMojoTransformRegistry {
     @PackageScope static final List<Closure> transforms = []
 
     static void addTransform(final Closure closure) {
-        transforms.add(closure)
+        transforms << closure
     }
 
     static void addAnnotation(final AnnotationNode annotationNode) {
