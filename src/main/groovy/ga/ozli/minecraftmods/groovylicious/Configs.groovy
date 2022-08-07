@@ -15,6 +15,13 @@ class Configs {
     }
 
     //@Config
+    static class GroupOnlyTest {
+        static class Group {
+            static boolean enable = true
+        }
+    }
+
+    //@Config
     static class RangeTest {
         /**
          * Ranged short test

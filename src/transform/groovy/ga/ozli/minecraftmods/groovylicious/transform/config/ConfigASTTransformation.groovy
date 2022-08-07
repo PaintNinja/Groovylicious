@@ -55,8 +55,8 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         }
 
         // make sure the @ModConfig annotation isn't applied to empty classes
-        if (configDataClass.properties.isEmpty())
-            addError("Unable to detect any properties inside class '${configDataClass.name}' annotated with '${configAnnotation.classNode.name}'", configDataClass)
+        if (configDataClass.properties.isEmpty() && !configDataClass.innerClasses.hasNext())
+            addError("Unable to detect any properties or sub-classes inside class '${configDataClass.name}' annotated with '${configAnnotation.classNode.name}'", configDataClass)
 
         // get the configType and modId from the annotation
         configType = getMemberConfigType(configAnnotation, configDataClass)
