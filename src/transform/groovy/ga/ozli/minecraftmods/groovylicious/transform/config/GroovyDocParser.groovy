@@ -2,19 +2,22 @@ package ga.ozli.minecraftmods.groovylicious.transform.config
 
 import groovy.lang.groovydoc.Groovydoc
 import groovy.transform.CompileStatic
+import groovy.transform.Memoized
 
 import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 @CompileStatic
 class GroovyDocParser {
-
-    // todo: build the `Matcher`s once and cache them
 
     Groovydoc groovyDoc
     @Lazy Map<String, String> tags = this.parseTags()
     @Lazy String commentFreeText = this.toCommentFreeText() // Groovydoc without the '/**', ' * ' and '*/'
     @Lazy String htmlFreeText = this.toHtmlFreeText() // same as above but also without HTML tags (e.g. <b> and </b>)
     @Lazy String plainText = this.toPlainText() // same as above but also without JavaDoc tags (e.g. @param)
+
+    @Lazy private static final Pattern bracketedTagPattern = Pattern.compile(/(.+)?\{@(?<tag>\w+|\d+)\s(?<content>.+)}(?:.+)?/)
+    @Lazy private static final Pattern bracketlessTagPattern = Pattern.compile(/^@(?<tag>\w+|\d+)\s(?<content>.+)\s?(?:[^\n]+|[^\r]+)?/)
 
     GroovyDocParser(final Groovydoc groovyDoc) {
         this.groovyDoc = groovyDoc
@@ -24,7 +27,7 @@ class GroovyDocParser {
         // For single line comments:
         // ^(\/\*\*\s?)(?<string>.+)(\s?\*\/) turns '/** ... */' into ...
         final String rawText = this.groovyDoc.content ?: ''
-        String commentFreeText = rawText
+        final String commentFreeText = rawText
                 .stripIndent()
                 .replaceAll($/^(/\*\*\s?)(?<string>.+)(\s?\*/)/$, '$2')
 
@@ -65,13 +68,13 @@ class GroovyDocParser {
     }
 
     String toPlainText() {
-        String plainText = this.htmlFreeText
-                .replaceAll(/\{@(?<tag>\w+|\d+)(?<content>\s.+)}/, '') // strip javadoc taglets in the format: {@tag content}
+        final String plainText = this.htmlFreeText
+                .replaceAll(/\{@(?:\w+|\d+)\s.+}/, '') // strip javadoc taglets in the format: {@tag content}
 
         String multiLinePlainText = ''
         plainText.eachLine {
             // strip javadoc taglets in the format: @tag content
-            it = it.replaceAll(/^@(?<tag>\w+|\d+)\s(?<content>.+)\s?(?:[^\n]+|[^\r]+)?/, '').stripTrailing()
+            it = it.replaceAll(/^@(?:\w+|\d+)\s.+\s?(?:[^\n]+|[^\r]+)?/, '').stripTrailing()
 
             if (it != '')
                 multiLinePlainText += '\n' + it
@@ -85,17 +88,17 @@ class GroovyDocParser {
 
     // returns a map of tag names to tag content (e.g. {@param foo} -> [param: foo])
     Map<String, String> parseTags() {
-        String htmlFreeText = this.htmlFreeText
+        final String htmlFreeText = this.htmlFreeText
 
         final Map<String, String> tags = [:]
         htmlFreeText.eachLine { line ->
             // parse javadoc taglets in the format: {@tag content}
-            Matcher bracketedTagMatcher = line =~ /(.+)?\{@(?<tag>\w+|\d+)\s(?<content>.+)}(?:.+)?/
+            final Matcher bracketedTagMatcher = line =~ bracketedTagPattern
             if (bracketedTagMatcher.matches()) {
                 tags[bracketedTagMatcher.group('tag')] = bracketedTagMatcher.group('content')
             } else {
                 // parse javadoc taglets in the format: @tag content
-                Matcher bracketlessTagMatcher = line =~ /^@(?<tag>\w+|\d+)\s(?<content>.+)\s?(?:[^\n]+|[^\r]+)?/
+                final Matcher bracketlessTagMatcher = line =~ bracketlessTagPattern
                 if (bracketlessTagMatcher.matches()) {
                     tags[bracketlessTagMatcher.group('tag')] = bracketlessTagMatcher.group('content')
                 }
