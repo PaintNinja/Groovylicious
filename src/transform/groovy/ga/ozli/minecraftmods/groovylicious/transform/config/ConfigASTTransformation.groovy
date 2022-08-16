@@ -1,5 +1,7 @@
 package ga.ozli.minecraftmods.groovylicious.transform.config
 
+import com.matyrobbrt.gml.GMod
+import com.matyrobbrt.gml.transform.api.ModRegistry
 import ga.ozli.minecraftmods.groovylicious.transform.TransformUtils
 import ga.ozli.minecraftmods.groovylicious.transform.mojo.GroovyliciousMojoTransformRegistry
 import groovy.transform.CompileStatic
@@ -7,8 +9,6 @@ import groovy.transform.Memoized
 import net.minecraftforge.common.ForgeConfigSpec
 import net.minecraftforge.fml.ModLoadingContext
 import net.minecraftforge.fml.config.ModConfig
-import net.thesilkminer.mc.austin.api.Mod
-import net.thesilkminer.mc.austin.api.Mojo
 import org.codehaus.groovy.ast.*
 import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.ast.stmt.BlockStatement
@@ -29,11 +29,10 @@ class ConfigASTTransformation extends AbstractASTTransformation {
     // todo: support Lists
     // todo: caching of float/short/byte casts(?)
 
-    private static final boolean DEBUG = false
+    private static final boolean DEBUG = true
 
     private static final ClassNode CONFIG_BUILDER_TYPE = ClassHelper.make(ForgeConfigSpec.Builder)
-    private static final ClassNode MOJO_TYPE = ClassHelper.make(Mojo)
-    private static final ClassNode MOD_TYPE = ClassHelper.make(Mod)
+    private static final ClassNode MOD_TYPE = ClassHelper.make(GMod)
 
     ModConfig.Type configType
     String modId
@@ -60,7 +59,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
 
         // get the configType and modId from the annotation
         configType = getMemberConfigType(configAnnotation, configDataClass)
-        modId = getMemberStringValue(configAnnotation, 'modId', '$unknown')
+        modId = getMemberStringValue(configAnnotation, 'modId', ModRegistry.getData(configDataClass.getPackageName())?.modId())
 
         if (DEBUG) println SV(configType, modId)
 
@@ -83,7 +82,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
             if (!configDataClass.outerClasses.empty) {
                 configDataClass.outerClasses.each { outerClass ->
                     if (DEBUG) println SV(outerClass)
-                    final boolean isModMainClass = outerClass.annotations*.classNode.find { it == MOJO_TYPE || it == MOD_TYPE }
+                    final boolean isModMainClass = outerClass.annotations*.classNode.find { it == MOD_TYPE }
 
                     // We found an outer class annotated with @Mojo or @Mod, so we know that this configDataClass is inside
                     // the Mod's main class and can add a static { configDataClass.init() } to it
