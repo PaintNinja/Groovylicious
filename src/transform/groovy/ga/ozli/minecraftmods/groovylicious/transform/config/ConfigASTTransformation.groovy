@@ -2,6 +2,7 @@ package ga.ozli.minecraftmods.groovylicious.transform.config
 
 import com.matyrobbrt.gml.GMod
 import com.matyrobbrt.gml.transform.api.ModRegistry
+import com.matyrobbrt.gml.transform.gmods.GModASTTransformer
 import ga.ozli.minecraftmods.groovylicious.transform.TransformUtils
 import ga.ozli.minecraftmods.groovylicious.transform.mojo.GroovyliciousMojoTransformRegistry
 import groovy.transform.CompileStatic
@@ -100,7 +101,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                 // Looks like the @Mojo/@Mod is in a different file, let's register a transform to the
                 // GroovyliciousMojoTransformRegistry to add a static { configDataClass.init() } to the Mod's main class
                 if (DEBUG) println "Adding transform to @GroovyliciousMod"
-                GroovyliciousMojoTransformRegistry.addTransform { AnnotationNode modAnnotation, ClassNode modClass ->
+                GModASTTransformer.registerTransformer { ClassNode modClass, AnnotationNode modAnnotation, SourceUnit source$ ->
                     if (DEBUG) println "Adding a call to ${configDataClass.nameWithoutPackage}'s init() method from ${modClass.name}"
                     modClass.addStaticInitializerStatements([
                             GeneralUtils.stmt(

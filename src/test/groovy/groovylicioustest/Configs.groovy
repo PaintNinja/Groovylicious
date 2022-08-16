@@ -10,18 +10,24 @@ import net.minecraftforge.common.ForgeConfigSpec
 class Configs {
 
     @Config
+    @CompileStatic
     static class Client { // this is saved as groovylicious-client.toml because the class name contains "Client"
         static boolean enable = true
     }
 
     @Config
+    @CompileStatic
     static class GroupOnlyTest {
         static class Group {
             static boolean enable = true
         }
+        static class OtherOne {
+            static int yes = 12
+        }
     }
 
     @Config
+    @CompileStatic
     static class RangeTest {
         /**
          * Ranged short test
@@ -37,6 +43,7 @@ class Configs {
     }
 
     @Config
+    @CompileStatic
     static class Common {
         // This is optional:
         static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()
@@ -51,6 +58,7 @@ class Configs {
         static float foxRotation = 9000.42f
 
         // config groups are supported - simply add inner static classes
+        @CompileStatic
         static class LifeOfBrian {
             /** How far are you willing to walk to see the messiah? (in blocks) */
             static long willingToWalkDistance = 2000L
@@ -63,6 +71,7 @@ class Configs {
 
             }*/
 
+            @CompileStatic
             static class Nested {
                 static boolean nestedConfigsSupport = true
 
