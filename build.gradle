@@ -25,7 +25,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 
 minecraft {
-    mappings channel: 'parchment', version: '1.18.2-2022.07.17-1.19'
+    mappings channel: 'parchment', version: '1.18.2-2022.07.17-1.19.2'
 
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -75,7 +75,6 @@ sourceSets {
         }
 
         compileClasspath += sourceSets.transform.output
-        runtimeClasspath += sourceSets.transform.output
     }
 
     test {
@@ -117,10 +116,12 @@ repositories {
 
 dependencies {
     // Forge
-    minecraft 'net.minecraftforge:forge:1.19.2-43.0.0'
+    minecraft 'net.minecraftforge:forge:1.19.2-43.0.11'
 
     compileOnly 'com.matyrobbrt.gml:gml:1.0.0'
-    runtimeOnly 'com.matyrobbrt.gml:gml:1.0.0:all'
+    runtimeOnly('com.matyrobbrt.gml:gml:1.0.0:all') {
+        exclude module: 'transform'
+    }
 
     transformCompileOnly 'com.matyrobbrt.gml:gml:1.0.0'
     transformCompileOnly 'com.matyrobbrt.gml:transform:1.0.0'

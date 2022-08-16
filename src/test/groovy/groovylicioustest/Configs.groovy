@@ -15,7 +15,7 @@ class Configs {
         static boolean enable = true
     }
 
-    @Config
+//    @Config
     @CompileStatic
     static class GroupOnlyTest {
         static class Group {
@@ -26,7 +26,7 @@ class Configs {
         }
     }
 
-    @Config
+//    @Config
     @CompileStatic
     static class RangeTest {
         /**
