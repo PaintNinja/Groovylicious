@@ -1,3 +1,5 @@
+import io.github.groovymc.modsdotgroovy.ConvertToTomlTask
+
 plugins {
     id 'groovy'
     id 'eclipse'
@@ -5,6 +7,12 @@ plugins {
     id 'net.minecraftforge.gradle' version '5.1.+'
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
     id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
+    id 'io.github.groovymc.modsdotgroovy' version '1.0.4'
+}
+
+modsDotGroovy {
+    dslVersion = '1.0.2'
+    automaticConfiguration = false
 }
 
 version = '1.19.2-0.2.0-SNAPSHOT'
@@ -189,6 +197,13 @@ publishing {
             }
         }
     }
+}
+
+tasks.create('testModsDotGroovyToToml', ConvertToTomlTask) {
+    it.configureForSourceSet(sourceSets.test)
+}
+tasks.create('modsDotGroovyToToml', ConvertToTomlTask) {
+    it.configureForSourceSet(sourceSets.main)
 }
 
 tasks.withType(GroovyCompile).configureEach { GroovyCompile task ->
