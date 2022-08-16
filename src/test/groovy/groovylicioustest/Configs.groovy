@@ -1,4 +1,4 @@
-package ga.ozli.minecraftmods.groovylicious
+package groovylicioustest
 
 import ga.ozli.minecraftmods.groovylicious.transform.Config
 import groovy.transform.CompileStatic
@@ -9,19 +9,19 @@ import net.minecraftforge.common.ForgeConfigSpec
 @CompileStatic
 class Configs {
 
-    //@Config
+    @Config
     static class Client { // this is saved as groovylicious-client.toml because the class name contains "Client"
         static boolean enable = true
     }
 
-    //@Config
+    @Config
     static class GroupOnlyTest {
         static class Group {
             static boolean enable = true
         }
     }
 
-    //@Config
+    @Config
     static class RangeTest {
         /**
          * Ranged short test
@@ -36,11 +36,10 @@ class Configs {
         static int rangedInt = 130
     }
 
-    //@Config
+    @Config
     static class Common {
         // This is optional:
         static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()
-//            static ForgeConfigSpec.LongValue test = myBuilder.defineInRange('test', 0L, Long.MIN_VALUE, Long.MAX_VALUE) // todo: make getters/setters for explicitly defined ForgeConfigSpec.ConfigValue/IntValue/etc
 
         /** How fast do you need to drive to accomplish time travel? {@range 50..100} */
         static byte timeTravelMph = 88

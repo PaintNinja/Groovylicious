@@ -7,9 +7,9 @@ import groovy.transform.stc.POJO
 import groovy.util.logging.Slf4j
 
 @POJO
-@Slf4j(category = MOD_ID)
 @GMod(MOD_ID)
 @CompileStatic
+@Slf4j(category = MOD_ID)
 class Groovylicious {
     @PackageScope static final String MOD_ID = 'groovylicious'
 

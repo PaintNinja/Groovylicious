@@ -1,4 +1,4 @@
-package ga.ozli.minecraftmods.groovylicious
+package groovylicioustest
 
 import com.matyrobbrt.gml.bus.EventBusSubscriber
 import com.matyrobbrt.gml.util.Environment
