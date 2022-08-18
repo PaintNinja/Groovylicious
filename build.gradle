@@ -1,3 +1,5 @@
+import io.github.groovymc.modsdotgroovy.ConvertToTomlTask
+
 plugins {
     id 'groovy'
     id 'eclipse'
@@ -5,6 +7,12 @@ plugins {
     id 'net.minecraftforge.gradle' version '5.1.+'
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
     id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
+    id 'io.github.groovymc.modsdotgroovy' version '1.0.4'
+}
+
+modsDotGroovy {
+    dslVersion = '1.0.2'
+    automaticConfiguration = false
 }
 
 version = '1.19.2-0.2.0-SNAPSHOT'
@@ -17,7 +25,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 
 minecraft {
-    mappings channel: 'parchment', version: '1.18.2-2022.07.17-1.19'
+    mappings channel: 'parchment', version: '1.18.2-2022.07.17-1.19.2'
 
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -31,21 +39,14 @@ minecraft {
                 groovylicious {
                     source sourceSets.main
                 }
+                test {
+                    source sourceSets.test
+                }
             }
         }
 
         client {}
         server { args '--nogui' }
-    }
-}
-
-configurations {
-    library
-    implementation.extendsFrom library
-}
-minecraft.runs.all {
-    lazyToken('minecraft_classpath') {
-        configurations.library.copyRecursive().resolve().collect({ it.absolutePath }).join(File.pathSeparator)
     }
 }
 
@@ -74,8 +75,15 @@ sourceSets {
         }
 
         compileClasspath += sourceSets.transform.output
-        runtimeClasspath += sourceSets.transform.output
     }
+
+    test {
+        compileClasspath += sourceSets.transform.output
+    }
+}
+
+configurations {
+    testCompileOnly.extendsFrom(compileOnly)
 }
 
 // Groovylicious is written in pure Groovy, so delete the empty java folder in each of the sourceSets
@@ -83,11 +91,9 @@ sourceSets.each { sourceSet ->
     final javaDir = file("src/${sourceSet.name}/java/")
     javaDir.deleteDir()
 }
-// let's also delete the unused generated and test folders while we're at it
+// let's also delete the unused generated dir while we're at it
 final generatedDir = file("src/generated/")
 generatedDir.deleteDir()
-final testDir = file("src/test/")
-testDir.deleteDir()
 
 repositories {
     maven {
@@ -105,17 +111,20 @@ repositories {
         name = 'Modding Inquisition Snapshots'
         url = 'https://maven.moddinginquisition.org/snapshots'
     }
+    mavenLocal()
 }
 
 dependencies {
     // Forge
-    minecraft 'net.minecraftforge:forge:1.19.2-43.0.0'
+    minecraft 'net.minecraftforge:forge:1.19.2-43.0.11'
 
-    // Austin's Powerful Language Provider: Keeping it Groovy, baby!
-    library compileOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2') // main sourceSet
-    library runtimeOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2:all')
-    library transformCompileOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2') // transform sourceSet
-    library transformRuntimeOnly('net.thesilkminer.mc.austin:aplp-1.19:1.1.2:all')
+    compileOnly 'com.matyrobbrt.gml:gml:1.0.0'
+    runtimeOnly('com.matyrobbrt.gml:gml:1.0.0:all') {
+        exclude module: 'transform'
+    }
+
+    transformCompileOnly 'com.matyrobbrt.gml:gml:1.0.0'
+    transformCompileOnly 'com.matyrobbrt.gml:transform:1.0.0'
 
     // Ksyxis in dev env - speeds up initial server load times by lazy loading spawn chunks at
     // the cost of lag on the server when someone joins from previously empty - fine for me as
@@ -189,6 +198,13 @@ publishing {
             }
         }
     }
+}
+
+tasks.create('testModsDotGroovyToToml', ConvertToTomlTask) {
+    it.configureForSourceSet(sourceSets.test)
+}
+tasks.create('modsDotGroovyToToml', ConvertToTomlTask) {
+    it.configureForSourceSet(sourceSets.main)
 }
 
 tasks.withType(GroovyCompile).configureEach { GroovyCompile task ->

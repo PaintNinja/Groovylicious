@@ -1,5 +1,7 @@
-package ga.ozli.minecraftmods.groovylicious
+package groovylicioustest
 
+import com.matyrobbrt.gml.bus.EventBusSubscriber
+import com.matyrobbrt.gml.util.Environment
 import com.mojang.blaze3d.vertex.PoseStack
 import ga.ozli.minecraftmods.groovylicious.api.gui.Alignment
 import ga.ozli.minecraftmods.groovylicious.dsl.ScreenBuilder
@@ -10,16 +12,14 @@ import net.minecraft.client.gui.screens.TitleScreen
 import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.client.event.ScreenEvent
 import net.minecraftforge.eventbus.api.SubscribeEvent
-import net.thesilkminer.mc.austin.api.EventBus
-import net.thesilkminer.mc.austin.api.EventBusSubscriber
 
 import static ga.ozli.minecraftmods.groovylicious.api.gui.ColoursRegistry.instance as Colours
 
 @CompileStatic
-@EventBusSubscriber(modId = Groovylicious.MOD_ID, bus = EventBus.FORGE, dist = Dist.CLIENT)
+@EventBusSubscriber(dist = Dist.CLIENT, environment = Environment.DEV)
 class ClientForgeEvents {
 
-    //@SubscribeEvent
+    @SubscribeEvent
     static void onScreenOpen(final ScreenEvent.Opening event) {
         if (event.newScreen instanceof TitleScreen)
             event.newScreen = testScreenDSL()
