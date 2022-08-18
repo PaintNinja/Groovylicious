@@ -6,6 +6,6 @@ import groovy.transform.CompileStatic
 @CompileStatic
 @GMod('groovylicioustest')
 class GroovyliciousTest {
-
+    GroovyliciousTest() {}
 
 }
