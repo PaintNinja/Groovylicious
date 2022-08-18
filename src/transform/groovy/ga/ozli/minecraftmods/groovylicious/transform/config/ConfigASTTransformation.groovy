@@ -30,7 +30,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
     // todo: support Lists
     // todo: caching of float/short/byte casts(?)
 
-    private static final boolean DEBUG = true
+    private static final boolean DEBUG = false
 
     private static final ClassNode CONFIG_BUILDER_TYPE = ClassHelper.make(ForgeConfigSpec.Builder)
     private static final ClassNode MOD_TYPE = ClassHelper.make(GMod)
