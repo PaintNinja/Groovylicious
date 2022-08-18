@@ -7,4 +7,6 @@ import groovy.transform.CompileStatic
     String name() default '</////autodetermined>'
 
     boolean exclude() default false
+
+    Class validator() default { true }
 }

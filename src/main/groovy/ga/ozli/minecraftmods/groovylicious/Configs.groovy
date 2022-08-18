@@ -6,6 +6,7 @@ import ga.ozli.minecraftmods.groovylicious.transform.config.ConfigValue
 import groovy.transform.CompileStatic
 import groovy.transform.stc.POJO
 import net.minecraftforge.common.ForgeConfigSpec
+import net.minecraftforge.fml.config.ModConfig
 
 @POJO
 @CompileStatic
@@ -38,7 +39,7 @@ class Configs {
         static int rangedInt = 130
     }
 
-    @Config
+    @Config(value = ModConfig.Type.CLIENT)
     static class Common {
         // This is optional:
         static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()
@@ -56,12 +57,18 @@ class Configs {
         static float foxRotation = 9000.42f
 
         // config groups are supported - simply add inner static classes
-        @ConfigGroup(name = 'hi')
+        @ConfigGroup(name = 'hi', excludeFieldsWithoutAnnotation = true)
         static class LifeOfBrian {
             /** How far are you willing to walk to see the messiah? (in blocks) */
             static long willingToWalkDistance = 2000L
 
             /** The holy words of the messiah's mother */
+            @ConfigValue(validator = { String it ->
+                if (it === null) return true
+                final isValid = it.contains('he')
+                if (!isValid) throw new RuntimeException()
+                return isValid
+            })
             static String quote = "He's not the messiah, he's a very naughty boy!"
 
             // optional

@@ -297,6 +297,12 @@ class ConfigASTTransformation extends AbstractASTTransformation {
             return
         }
 
+        ClosureExpression predicate = (ClosureExpression) annotation?.members?.get('validator')
+        if (predicate !== null && !configValueType.supportsValidator()) {
+            addError("Config of type $configValueType does not support validators!", property)
+            return
+        }
+
         if (DEBUG) {
             println SV(configValueType)
             println SV(boundedConfigValueType)
@@ -408,7 +414,8 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                                 GeneralUtils.constX(propertyName),
                                 getPropertyValueOrDefault(property),
                                 isBounded ? minValueBound : null,
-                                isBounded ? maxValueBound : null
+                                isBounded ? maxValueBound : null,
+                                predicate
                         )
                 )
         )

@@ -14,6 +14,9 @@ class ConfigTypes {
 
     interface ConfigValueType {
         ClassNode getClassNode()
+        default boolean supportsValidator() {
+            return false
+        }
     }
 
     static ConfigValueType getConfigValueType(ClassNode primitiveType) {
@@ -140,7 +143,12 @@ class ConfigTypes {
                         ClassHelper.makeCached(ForgeConfigSpec.ConfigValue),
                         new GenericsType(ClassHelper.STRING_TYPE)
                 )
-        ),
+        ) {
+            @Override
+            boolean supportsValidator() {
+                return true
+            }
+        },
 
         /** {@code ForgeConfigSpec.ConfigValue<?>} */
         GENERIC_VALUE_TYPE(
@@ -148,7 +156,12 @@ class ConfigTypes {
                         ClassHelper.makeCached(ForgeConfigSpec.ConfigValue),
                         GenericsUtils.buildWildcardType()
                 )
-        )
+        ) {
+            @Override
+            boolean supportsValidator() {
+                return true
+            }
+        }
 
         final ClassNode classNode
         Unbounded(ClassNode classNode) {
