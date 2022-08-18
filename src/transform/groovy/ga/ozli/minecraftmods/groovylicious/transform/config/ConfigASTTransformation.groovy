@@ -2,16 +2,16 @@ package ga.ozli.minecraftmods.groovylicious.transform.config
 
 import com.google.common.base.Predicates
 import com.google.common.base.Suppliers
+import com.matyrobbrt.gml.GMod
+import com.matyrobbrt.gml.transform.api.ModRegistry
+import com.matyrobbrt.gml.transform.gmods.GModASTTransformer
 import ga.ozli.minecraftmods.groovylicious.transform.TransformUtils
-import ga.ozli.minecraftmods.groovylicious.transform.mojo.GroovyliciousMojoTransformRegistry
 import groovy.transform.CompileStatic
 import groovy.transform.Memoized
 import groovyjarjarasm.asm.MethodVisitor
 import net.minecraftforge.common.ForgeConfigSpec
 import net.minecraftforge.fml.ModLoadingContext
 import net.minecraftforge.fml.config.ModConfig
-import net.thesilkminer.mc.austin.api.Mod
-import net.thesilkminer.mc.austin.api.Mojo
 import org.codehaus.groovy.ast.*
 import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.ast.stmt.BlockStatement
@@ -37,13 +37,12 @@ class ConfigASTTransformation extends AbstractASTTransformation {
     private static final boolean DEBUG = false
 
     private static final ClassNode CONFIG_BUILDER_TYPE = ClassHelper.make(ForgeConfigSpec.Builder)
-    private static final ClassNode MOJO_TYPE = ClassHelper.make(Mojo)
-    private static final ClassNode MOD_TYPE = ClassHelper.make(Mod)
     private static final ClassNode CONFIG_VALUE_TYPE = ClassHelper.make(ConfigValue)
     private static final ClassNode GROUP_TYPE = ClassHelper.make(ConfigGroup)
     private static final ClassNode LIST_TYPE = ClassHelper.make(List)
     private static final ClassNode SUPPLIERS_TYPE = ClassHelper.make(Suppliers)
     private static final ClassNode PREDICATES_TYPE = ClassHelper.make(Predicates)
+    private static final ClassNode MOD_TYPE = ClassHelper.make(GMod)
 
     ModConfig.Type configType
     String modId
@@ -70,7 +69,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
 
         // get the configType and modId from the annotation
         configType = getMemberConfigType(configAnnotation, configDataClass)
-        modId = getMemberStringValue(configAnnotation, 'modId', '$unknown')
+        modId = getMemberStringValue(configAnnotation, 'modId', ModRegistry.getData(configDataClass.getPackageName())?.modId())
 
         if (DEBUG) println SV(configType, modId)
 
@@ -93,7 +92,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
             if (!configDataClass.outerClasses.empty) {
                 configDataClass.outerClasses.each { outerClass ->
                     if (DEBUG) println SV(outerClass)
-                    final boolean isModMainClass = outerClass.annotations*.classNode.find { it == MOJO_TYPE || it == MOD_TYPE }
+                    final boolean isModMainClass = outerClass.annotations*.classNode.find { it == MOD_TYPE }
 
                     // We found an outer class annotated with @Mojo or @Mod, so we know that this configDataClass is inside
                     // the Mod's main class and can add a static { configDataClass.init() } to it
@@ -111,7 +110,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                 // Looks like the @Mojo/@Mod is in a different file, let's register a transform to the
                 // GroovyliciousMojoTransformRegistry to add a static { configDataClass.init() } to the Mod's main class
                 if (DEBUG) println "Adding transform to @GroovyliciousMod"
-                GroovyliciousMojoTransformRegistry.addTransform { AnnotationNode modAnnotation, ClassNode modClass ->
+                GModASTTransformer.registerTransformer { ClassNode modClass, AnnotationNode modAnnotation, SourceUnit source$ ->
                     if (DEBUG) println "Adding a call to ${configDataClass.nameWithoutPackage}'s init() method from ${modClass.name}"
                     modClass.addStaticInitializerStatements([
                             GeneralUtils.stmt(
@@ -166,7 +165,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                                         ),
                                         GeneralUtils.varX('$configSpec', ClassHelper.makeCached(ForgeConfigSpec)),
                                         { ->
-                                            if (modId == '$unknown') {
+                                            if (modId === null) {
                                                 return new GStringExpression(
                                                         '',
                                                         [
@@ -192,17 +191,6 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                         )
                 )
         ], false)
-    }
-
-    static <T> T getMemberPropertyValue(AnnotationNode annotation, String memberName, T defaultValue) {
-        final Expression member = annotation.getMember(memberName)
-        if (member instanceof PropertyExpression) {
-            final Expression property = (member as PropertyExpression).property
-            if (property !== null) {
-                return (property as ConstantExpression).value as T
-            }
-        }
-        return defaultValue
     }
 
     static ModConfig.Type getMemberConfigType(AnnotationNode annotation, ClassNode annotatedClass) {

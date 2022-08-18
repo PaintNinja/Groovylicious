@@ -1,4 +1,4 @@
-package ga.ozli.minecraftmods.groovylicious
+package groovylicioustest
 
 import ga.ozli.minecraftmods.groovylicious.transform.Config
 import ga.ozli.minecraftmods.groovylicious.transform.config.ConfigGroup
@@ -23,14 +23,17 @@ class Configs {
         static List<String> stuff = ['12']
     }
 
-    //@Config
+//    @Config
     static class GroupOnlyTest {
         static class Group {
             static boolean enable = true
         }
+        static class OtherOne {
+            static int yes = 12
+        }
     }
 
-    //@Config
+//    @Config
     static class RangeTest {
         /**
          * Ranged short test
@@ -49,7 +52,6 @@ class Configs {
     static class Common {
         // This is optional:
         static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()
-//            static ForgeConfigSpec.LongValue test = myBuilder.defineInRange('test', 0L, Long.MIN_VALUE, Long.MAX_VALUE) // todo: make getters/setters for explicitly defined ForgeConfigSpec.ConfigValue/IntValue/etc
 
         /** How fast do you need to drive to accomplish time travel? {@range 50..100} */
         @ConfigValue(exclude = true)
@@ -85,6 +87,7 @@ class Configs {
 
             }*/
 
+            @CompileStatic
             static class Nested {
                 static boolean nestedConfigsSupport = true
 
