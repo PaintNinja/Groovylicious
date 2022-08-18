@@ -16,4 +16,6 @@ import java.lang.annotation.Target
 @interface Config {
     ModConfig.Type value() default ModConfig.Type.COMMON
     String modId() default '(autoDetected)'
+    boolean excludeFieldsWithoutAnnotation() default false
+    boolean excludeGroupsWithoutAnnotation() default false
 }

@@ -1,6 +1,8 @@
 package ga.ozli.minecraftmods.groovylicious
 
 import ga.ozli.minecraftmods.groovylicious.transform.Config
+import ga.ozli.minecraftmods.groovylicious.transform.config.ConfigGroup
+import ga.ozli.minecraftmods.groovylicious.transform.config.ConfigValue
 import groovy.transform.CompileStatic
 import groovy.transform.stc.POJO
 import net.minecraftforge.common.ForgeConfigSpec
@@ -36,22 +38,25 @@ class Configs {
         static int rangedInt = 130
     }
 
-    //@Config
+    @Config
     static class Common {
         // This is optional:
         static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()
 //            static ForgeConfigSpec.LongValue test = myBuilder.defineInRange('test', 0L, Long.MIN_VALUE, Long.MAX_VALUE) // todo: make getters/setters for explicitly defined ForgeConfigSpec.ConfigValue/IntValue/etc
 
         /** How fast do you need to drive to accomplish time travel? {@range 50..100} */
+        @ConfigValue(exclude = true)
         static byte timeTravelMph = 88
 
         /**
          * Fox rotation speed in RPM<br>
          * 100 is slow, 9999 is fast
          */
+        @ConfigValue(name = 'shush')
         static float foxRotation = 9000.42f
 
         // config groups are supported - simply add inner static classes
+        @ConfigGroup(name = 'hi')
         static class LifeOfBrian {
             /** How far are you willing to walk to see the messiah? (in blocks) */
             static long willingToWalkDistance = 2000L

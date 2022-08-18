@@ -34,6 +34,8 @@ class ConfigASTTransformation extends AbstractASTTransformation {
     private static final ClassNode CONFIG_BUILDER_TYPE = ClassHelper.make(ForgeConfigSpec.Builder)
     private static final ClassNode MOJO_TYPE = ClassHelper.make(Mojo)
     private static final ClassNode MOD_TYPE = ClassHelper.make(Mod)
+    private static final ClassNode CONFIG_VALUE = ClassHelper.make(ConfigValue)
+    private static final ClassNode GROUP_TYPE = ClassHelper.make(ConfigGroup)
 
     ModConfig.Type configType
     String modId
@@ -115,11 +117,18 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         // loop through all the properties in the configDataClass and setup the relevant config initializers, getters and setters
         configDataClass.properties.each { property ->
             if (DEBUG) println "\n${configDataClass.name}.${SV(property.name)}"
-            generateConfigValue(configDataClass, property)
+            final boolean excludeFieldsWithoutAnnotation = getMemberValue(configAnnotation, 'excludeFieldsWithoutAnnotation')
+            generateConfigValue(configDataClass, property, excludeFieldsWithoutAnnotation)
         }
 
         // Inner static dataclasses in a configDataClass are considered config groups
-        configDataClass.innerClasses.each { configGroup -> generateConfigGroup(configGroup, rootInitMethod) }
+        final boolean excludeGroupsWithoutAnnotation = getMemberValue(configAnnotation, 'excludeGroupsWithoutAnnotation')
+        configDataClass.innerClasses.each { configGroup ->
+            final nestedAnn = configGroup.annotations.find { it.classNode == GROUP_TYPE }
+            if (nestedAnn === null && excludeGroupsWithoutAnnotation) return
+            if (nestedAnn !== null && getMemberValue(nestedAnn, 'exclude')) return
+            generateConfigGroup(configGroup, rootInitMethod)
+        }
 
         // @Generated
         // public static final ForgeConfigSpec $configSpec = $configBuilder.build()
@@ -253,8 +262,11 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         )
     }
 
-    void generateConfigValue(ClassNode targetClassNode, PropertyNode property) {
+    void generateConfigValue(ClassNode targetClassNode, PropertyNode property, boolean excludeFieldsWithoutAnnotation) {
         if (property.type == CONFIG_BUILDER_TYPE) return // don't generate config values for the ForgeConfigSpec.Builder
+        final annotation = property.annotations.find { it.classNode == CONFIG_VALUE }
+        if (annotation !== null && getMemberStringValue(annotation, 'exclude')) return
+        if (annotation === null && excludeFieldsWithoutAnnotation) return
 
         // make the property private static final to force Groovy to use the get() and set() methods
         property.modifiers = TransformUtils.CONSTANT_MODIFIERS
@@ -376,6 +388,10 @@ class ConfigASTTransformation extends AbstractASTTransformation {
             }
         }
 
+        final propertyName = Optional.ofNullable(annotation)
+            .map { getMemberStringValue(it, 'name') }
+            .filter { it !== null }
+            .orElse(property.name)
         // make the appropriate underlying config value field
         // Assuming property.name == 'test' and property.type == int in this example:
         // @Generated
@@ -389,7 +405,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                         hasComments ? getConfigBuilderWithComments(configCommentExprs) : configBuilderVariable,
                         isBounded ? 'defineInRange' : 'define',
                         TransformUtils.conditionalArgs(
-                                GeneralUtils.constX(property.name),
+                                GeneralUtils.constX(propertyName),
                                 getPropertyValueOrDefault(property),
                                 isBounded ? minValueBound : null,
                                 isBounded ? maxValueBound : null
@@ -460,6 +476,12 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         final MethodNode groupInitMethod = groupClass.methods.find { method ->
             method.returnType == ClassHelper.VOID_TYPE && method.name == 'init' && method.isStatic()
         } ?: TransformUtils.addStaticMethod(targetClassNode: groupClass, methodName: 'init')
+        final annotation = groupClass.annotations.find { it.classNode == GROUP_TYPE }
+
+        final groupName = Optional.ofNullable(annotation)
+            .map { getMemberStringValue(it, 'name') }
+            .filter { it !== null}
+            .orElse(groupClass.nameWithoutPackage.split(/\$/).last())
 
         /*
          * @ModConfig
@@ -480,7 +502,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                 GeneralUtils.stmt(GeneralUtils.callX(
                         configBuilderVariable,
                         'push',
-                        GeneralUtils.args(GeneralUtils.constX(groupClass.nameWithoutPackage.split(/\$/).last()))
+                        GeneralUtils.args(GeneralUtils.constX(groupName))
                 )),
 
                 // groupClass.init()
@@ -492,12 +514,17 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                 GeneralUtils.stmt(GeneralUtils.callX(configBuilderVariable, 'pop'))
         ])
 
+        final boolean excludeFieldsWithoutAnnotation = annotation !== null && getMemberValue(annotation, 'excludeFieldsWithoutAnnotation')
+        final boolean excludeGroupsWithoutAnnotation = annotation !== null && getMemberValue(annotation, 'excludeGroupsWithoutAnnotation')
         groupClass.properties.each { property ->
             if (DEBUG) println "\n${groupClass.nameWithoutPackage.split(/\$/).last()}.${property.name}"
-            generateConfigValue(groupClass, property)
+            generateConfigValue(groupClass, property, excludeFieldsWithoutAnnotation)
         }
 
         groupClass.innerClasses.each { nestedConfigGroup ->
+            final nestedAnn = nestedConfigGroup.annotations.find { it.classNode == GROUP_TYPE }
+            if (nestedAnn === null && excludeGroupsWithoutAnnotation) return
+            if (nestedAnn !== null && getMemberValue(nestedAnn, 'exclude')) return
             generateConfigGroup(nestedConfigGroup, groupInitMethod)
         }
     }
