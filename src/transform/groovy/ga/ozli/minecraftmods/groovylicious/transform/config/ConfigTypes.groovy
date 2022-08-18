@@ -1,6 +1,7 @@
 package ga.ozli.minecraftmods.groovylicious.transform.config
 
 import groovy.transform.CompileStatic
+import groovyjarjarasm.asm.MethodVisitor
 import net.minecraftforge.common.ForgeConfigSpec
 import org.codehaus.groovy.ast.ClassHelper
 import org.codehaus.groovy.ast.ClassNode
@@ -8,9 +9,35 @@ import org.codehaus.groovy.ast.GenericsType
 import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.ast.tools.GeneralUtils
 import org.codehaus.groovy.ast.tools.GenericsUtils
+import org.objectweb.asm.Opcodes
+import org.openjdk.nashorn.internal.codegen.types.Type
 
 @CompileStatic
 class ConfigTypes {
+
+    static ConfigValueType list(ClassNode type) {
+        return new List(type)
+    }
+
+    static final class List implements ConfigValueType {
+        final ClassNode classNode
+        List(ClassNode type) {
+            classNode = GenericsUtils.makeClassSafeWithGenerics(
+                    ClassHelper.makeCached(ForgeConfigSpec.ConfigValue), new GenericsType(
+                    GenericsUtils.makeClassSafeWithGenerics(java.util.List, type)
+                )
+            )
+        }
+        @Override
+        ClassNode getClassNode() {
+            return classNode
+        }
+
+        @Override
+        boolean supportsValidator() {
+            return true
+        }
+    }
 
     interface ConfigValueType {
         ClassNode getClassNode()

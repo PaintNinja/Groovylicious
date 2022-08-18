@@ -12,9 +12,15 @@ import net.minecraftforge.fml.config.ModConfig
 @CompileStatic
 class Configs {
 
-    //@Config
+    @Config
     static class Client { // this is saved as groovylicious-client.toml because the class name contains "Client"
         static boolean enable = true
+        static Boolean enable2 = false
+
+        static int yes = 14
+        static Integer no = 200
+
+        static List<String> stuff = ['12']
     }
 
     //@Config
@@ -39,7 +45,7 @@ class Configs {
         static int rangedInt = 130
     }
 
-    @Config(value = ModConfig.Type.CLIENT)
+    // @Config(value = ModConfig.Type.CLIENT)
     static class Common {
         // This is optional:
         static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()
@@ -56,6 +62,9 @@ class Configs {
         @ConfigValue(name = 'shush')
         static float foxRotation = 9000.42f
 
+        @ConfigValue(name = 'testList')
+        static List<String> myValues
+
         // config groups are supported - simply add inner static classes
         @ConfigGroup(name = 'hi', excludeFieldsWithoutAnnotation = true)
         static class LifeOfBrian {
@@ -63,7 +72,7 @@ class Configs {
             static long willingToWalkDistance = 2000L
 
             /** The holy words of the messiah's mother */
-            @ConfigValue(validator = { String it ->
+            @ConfigValue(name = 'customName', validator = { String it ->
                 if (it === null) return true
                 final isValid = it.contains('he')
                 if (!isValid) throw new RuntimeException()
