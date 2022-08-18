@@ -25,7 +25,7 @@ final class DefRegisterASTTransformer extends AbstractASTTransformation {
         final AnnotationNode annotation = nodes[0] as AnnotationNode
         final AnnotatedNode targetNode = nodes[1] as AnnotatedNode
 
-        // make sure the @ModConfig annotation is only applied to classes
+        // make sure the @AutoRegister annotation is only applied to fields
         if (!(targetNode instanceof FieldNode)) {
             addError("The ${annotation.classNode.name} annotation can only be applied to fields.", targetNode)
             return
