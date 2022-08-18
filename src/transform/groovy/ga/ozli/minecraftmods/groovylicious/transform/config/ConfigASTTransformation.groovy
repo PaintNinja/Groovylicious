@@ -251,7 +251,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
     }
 
     void generateConfigValue(ClassNode targetClassNode, PropertyNode property) {
-        if (property.type == CONFIG_BUILDER_TYPE) return // don't generate config values for the ForgeConfigSpec.Builder
+        if (property.type == CONFIG_BUILDER_TYPE || property.type == CONFIG_SPEC_TYPE) return // don't generate config values for the ForgeConfigSpec.Builder/ForgeConfigSpec
 
         // make the property private static final to force Groovy to use the get() and set() methods
         property.modifiers = TransformUtils.CONSTANT_MODIFIERS

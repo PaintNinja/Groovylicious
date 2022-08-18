@@ -118,6 +118,7 @@ dependencies {
     // Forge
     minecraft 'net.minecraftforge:forge:1.19.2-43.0.11'
 
+    // Matyrobbrt's GroovyModLoader
     compileOnly 'com.matyrobbrt.gml:gml:1.0.0'
     runtimeOnly('com.matyrobbrt.gml:gml:1.0.0:all') {
         exclude module: 'transform'
