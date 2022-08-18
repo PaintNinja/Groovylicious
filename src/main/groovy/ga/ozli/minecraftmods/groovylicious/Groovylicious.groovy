@@ -4,17 +4,18 @@ import com.matyrobbrt.gml.GMod
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import groovy.transform.stc.POJO
-import groovy.util.logging.Slf4j
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 @POJO
 @GMod(MOD_ID)
 @CompileStatic
-@Slf4j(category = MOD_ID)
 class Groovylicious {
     @PackageScope static final String MOD_ID = 'groovylicious'
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID)
 
     Groovylicious() {
-        log.info "${MOD_ID.capitalize()} starting"
-        log.info SV(GroovySystem.version)
+        LOGGER.info "${MOD_ID.capitalize()} starting"
+        LOGGER.info SV(GroovySystem.version)
     }
 }

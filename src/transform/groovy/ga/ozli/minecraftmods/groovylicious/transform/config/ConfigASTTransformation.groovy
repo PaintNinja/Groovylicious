@@ -149,7 +149,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                                         ),
                                         GeneralUtils.varX('$configSpec', ClassHelper.makeCached(ForgeConfigSpec)),
                                         { ->
-                                            if (modId == '$unknown') {
+                                            if (modId === null) {
                                                 return new GStringExpression(
                                                         '',
                                                         [
