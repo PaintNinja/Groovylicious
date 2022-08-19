@@ -1,13 +1,25 @@
 package ga.ozli.minecraftmods.groovylicious.transform.defregister
 
+import com.matyrobbrt.gml.transform.api.ModRegistry
+import com.matyrobbrt.gml.transform.gmods.GModASTTransformer
 import ga.ozli.minecraftmods.groovylicious.transform.TransformUtils
 import groovy.transform.CompileStatic
 import groovyjarjarasm.asm.Handle
 import groovyjarjarasm.asm.Type as JarType
+import net.minecraft.core.Registry
+import net.minecraft.resources.ResourceKey
 import net.minecraftforge.registries.DeferredRegister
+import net.minecraftforge.registries.ForgeRegistry
+import net.minecraftforge.registries.IForgeRegistry
 import net.minecraftforge.registries.RegistryObject
 import org.codehaus.groovy.ast.*
+import org.codehaus.groovy.ast.expr.ClassExpression
+import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.ConstantExpression
+import org.codehaus.groovy.ast.expr.ListExpression
+import org.codehaus.groovy.ast.expr.PropertyExpression
+import org.codehaus.groovy.ast.stmt.BlockStatement
+import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codehaus.groovy.ast.tools.GeneralUtils
 import org.codehaus.groovy.ast.tools.GenericsUtils
 import org.codehaus.groovy.control.SourceUnit
@@ -25,6 +37,10 @@ import java.util.function.Supplier
 final class DefRegisterASTTransformer extends AbstractASTTransformation {
     public static final ClassNode REGISTRATION_NAME_TYPE = ClassHelper.make(RegistrationName)
     public static final String REGISTER_DESC = Type.getMethodDescriptor(Type.getType(RegistryObject), Type.getType(String), Type.getType(Supplier))
+    public static final ClassNode RESOURCE_KEY_TYPE = ClassHelper.make(ResourceKey)
+    public static final ClassNode REGISTRY_TYPE = ClassHelper.make(Registry)
+    public static final ClassNode FORGE_REGISTRY_TYPE = ClassHelper.make(IForgeRegistry)
+    public static final ClassNode DEFERRED_REGISTER_TYPE = ClassHelper.make(DeferredRegister)
     @Override
     void visit(ASTNode[] nodes, SourceUnit source) {
         init(nodes, source) // ensure that nodes is [AnnotationNode, AnnotatedNode]
@@ -32,16 +48,126 @@ final class DefRegisterASTTransformer extends AbstractASTTransformation {
         final AnnotationNode annotation = nodes[0] as AnnotationNode
         final AnnotatedNode targetNode = nodes[1] as AnnotatedNode
 
-        // make sure the @AutoRegister annotation is only applied to fields
+        if (targetNode instanceof ClassNode) {
+            transformClass(annotation, targetNode)
+            return
+        }
+
+        // make sure the @AutoRegister annotation is only applied to fields / classes
         if (!(targetNode instanceof FieldNode)) {
-            addError("The ${annotation.classNode.name} annotation can only be applied to fields.", targetNode)
+            addError("The ${annotation.classNode.name} annotation can only be applied to fields and classes.", targetNode)
             return
         }
         final targetField = (FieldNode) targetNode
         final targetClass = (ClassNode) targetField.declaringClass
+        transformField(annotation, targetClass, targetField)
+    }
 
-        if (targetNode.properties.isEmpty())
-            addError("Unable to detect any properties inside class '${targetNode.name}' annotated with '${annotation.classNode.name}'", targetClass)
+    private void transformClass(AnnotationNode annotationNode, ClassNode targetClass) {
+        final closure = annotationNode.getMember('value') as ClosureExpression
+        if (closure === null) {
+            addError('Class-level @AutoRegister requires providing the registries in a closure!', targetClass)
+            return
+        }
+        final expression = (((BlockStatement) closure.code).getStatements().find() as ExpressionStatement).expression
+
+        if (expression instanceof ListExpression) {
+            expression.expressions.each {
+                final val = it as PropertyExpression
+                final property = (val.property as ConstantExpression).value as String
+                final registryField = (val.getObjectExpression() as ClassExpression).type.getField(property)
+                generateDR(annotationNode, targetClass, registryField)
+            }
+        } else {
+            final val = expression as PropertyExpression
+            final declaringClass = (val.getObjectExpression() as ClassExpression).type
+            final property = (val.property as ConstantExpression).value as String
+            final registryField = declaringClass.getField(property)
+            generateDR(annotationNode, targetClass, registryField)
+        }
+    }
+
+    private void generateDR(final AnnotationNode annotationNode, final ClassNode targetClass, final FieldNode registryField) {
+        if (registryField.type == RESOURCE_KEY_TYPE) {
+            makeResourceKey(annotationNode, targetClass, registryField)
+        } else if (registryField.type.isDerivedFrom(REGISTRY_TYPE)) {
+            makeRegistry(annotationNode, targetClass, registryField)
+        } else if (GeneralUtils.isOrImplements(registryField.type, FORGE_REGISTRY_TYPE)) {
+            makeForgeRegistry(annotationNode, targetClass, registryField)
+        } else {
+            addError("No known way of representing registry from ${registryField.owner.name}.${registryField.name}", registryField)
+        }
+    }
+
+    private void makeResourceKey(final AnnotationNode annotation, final ClassNode targetClass, final FieldNode registryField) {
+        // ResourceKey<Registry<T>>
+        final type = registryField.type.genericsTypes[0].type.genericsTypes[0].type
+        final modId = ModRegistry.getData(targetClass.packageName)?.modId()
+        if (modId === null) {
+            addError('Could not determine modId for AutoRegister', targetClass)
+            return
+        }
+        final defRegisterField = TransformUtils.addField(
+                fieldName: registryField.name.replace('_REGISTRY', 'S').toUpperCase(Locale.ROOT),
+                targetClassNode: targetClass,
+                type: GenericsUtils.makeClassSafeWithGenerics(DeferredRegister, type),
+                modifiers: Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,
+                initialValue: GeneralUtils.callX(
+                        DEFERRED_REGISTER_TYPE, 'create', GeneralUtils.args(
+                        GeneralUtils.fieldX(registryField), GeneralUtils.constX(modId)
+                    )
+                )
+        )
+        transformField(annotation, targetClass, defRegisterField)
+    }
+
+    private void makeForgeRegistry(final AnnotationNode annotation, final ClassNode targetClass, final FieldNode registryField) {
+        // ForgeRegistry<T>
+        final type = registryField.type.genericsTypes[0].type
+        final modId = ModRegistry.getData(targetClass.packageName)?.modId()
+        if (modId === null) {
+            addError('Could not determine modId for AutoRegister', targetClass)
+            return
+        }
+        final defRegisterField = TransformUtils.addField(
+                fieldName: registryField.name.toUpperCase(Locale.ROOT),
+                targetClassNode: targetClass,
+                type: GenericsUtils.makeClassSafeWithGenerics(DeferredRegister, type),
+                modifiers: Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,
+                initialValue: GeneralUtils.callX(
+                        DEFERRED_REGISTER_TYPE, 'create', GeneralUtils.args(
+                        GeneralUtils.fieldX(registryField), GeneralUtils.constX(modId)
+                    )
+                )
+        )
+        transformField(annotation, targetClass, defRegisterField)
+    }
+
+    private void makeRegistry(final AnnotationNode annotationNode, final ClassNode targetClass, final FieldNode registryField) {
+        // Registry<T>
+        final type = registryField.type.genericsTypes[0].type
+        final modId = ModRegistry.getData(targetClass.packageName)?.modId()
+        if (modId === null) {
+            addError('Could not determine modId for AutoRegister', targetClass)
+            return
+        }
+        final defRegisterField = TransformUtils.addField(
+                fieldName: (registryField.name + 'S').toUpperCase(Locale.ROOT),
+                targetClassNode: targetClass,
+                type: GenericsUtils.makeClassSafeWithGenerics(DeferredRegister, type),
+                modifiers: Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,
+                initialValue: GeneralUtils.callX(
+                        DEFERRED_REGISTER_TYPE, 'create', GeneralUtils.args(
+                        GeneralUtils.callX(GeneralUtils.fieldX(registryField), 'key'), GeneralUtils.constX(modId)
+                    )
+                )
+        )
+        transformField(annotationNode, targetClass, defRegisterField)
+    }
+
+    private void transformField(AnnotationNode annotation, ClassNode targetClass, FieldNode targetField) {
+        if (targetClass.properties.isEmpty())
+            addError("Unable to detect any properties inside class '${targetClass.name}' annotated with '${annotation.classNode.name}'", targetClass)
         if (!targetField.isStatic()) {
             addError('@AutoRegister can only be applied to static fields.', targetField)
             return
@@ -81,6 +207,13 @@ final class DefRegisterASTTransformer extends AbstractASTTransformation {
                 )], false)
             }
         }
+
+        if (annotation.members.containsKey('registerToBus') && !getMemberValue(annotation, 'registerToBus')) return
+        GModASTTransformer.registerTransformer(ModRegistry.getData(targetClass.packageName)?.modId()) { ClassNode classNode, AnnotationNode annotationNode, SourceUnit source ->
+            classNode.addObjectInitializerStatements(GeneralUtils.stmt(GeneralUtils.callX(
+                    GeneralUtils.fieldX(targetField), 'register', GeneralUtils.callX(GeneralUtils.varX('this'), 'getModBus')
+            )))
+        }
     }
 
     private void register(final ClassNode registryType, final FieldNode drVar, final ClassNode clazz, final PropertyNode property) {
@@ -115,7 +248,7 @@ final class DefRegisterASTTransformer extends AbstractASTTransformation {
                     it.visitMethodInsn(Opcodes.INVOKEVIRTUAL, Type.getInternalName(DeferredRegister), 'register', REGISTER_DESC, false)
                 }
         )
-        property.field.setInitialValueExpression(new ConstantExpression(null))
+        clazz.removeField(property.field.name)
 
         property.setGetterBlock(GeneralUtils.stmt(GeneralUtils.bytecodeX(property.type) {
             it.visitFieldInsn(Opcodes.GETSTATIC, getInternalName(clazz), field.name, Type.getDescriptor(RegistryObject))
