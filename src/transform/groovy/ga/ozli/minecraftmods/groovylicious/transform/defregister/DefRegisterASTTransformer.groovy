@@ -189,23 +189,7 @@ final class DefRegisterASTTransformer extends AbstractASTTransformation {
         }
 
         if (getMemberValue(annotation, 'includeInnerClasses')) {
-            targetClass.innerClasses.each { InnerClassNode inner ->
-                inner.properties.each {
-                    if (predicate.test(it.type)) {
-                        register(baseType, targetField, inner, it)
-                    }
-                }
-                if (!inner.methods.any { it.parameters.size() == 0 && it.name == 'init' && it.isStatic() }) {
-                    TransformUtils.addStaticMethod(
-                            targetClassNode: inner,
-                            methodName: 'init',
-                    )
-                }
-
-                targetClass.addStaticInitializerStatements([GeneralUtils.stmt(
-                        GeneralUtils.callX(inner, 'init')
-                )], false)
-            }
+            registerInners(predicate, targetClass, baseType, targetField)
         }
 
         if (annotation.members.containsKey('registerToBus') && !getMemberValue(annotation, 'registerToBus')) return
@@ -213,6 +197,29 @@ final class DefRegisterASTTransformer extends AbstractASTTransformation {
             classNode.addObjectInitializerStatements(GeneralUtils.stmt(GeneralUtils.callX(
                     GeneralUtils.fieldX(targetField), 'register', GeneralUtils.callX(GeneralUtils.varX('this'), 'getModBus')
             )))
+        }
+    }
+
+    private void registerInners(final Predicate<ClassNode> predicate, final ClassNode targetClass, final ClassNode baseType, final FieldNode targetField) {
+        targetClass.innerClasses.each { InnerClassNode inner ->
+            inner.properties.each {
+                if (predicate.test(it.type)) {
+                    register(baseType, targetField, inner, it)
+                }
+            }
+            if (!inner.methods.any { it.parameters.size() == 0 && it.name == 'init' && it.isStatic() }) {
+                TransformUtils.addStaticMethod(
+                        targetClassNode: inner,
+                        methodName: 'init',
+                )
+            }
+
+            targetClass.addStaticInitializerStatements([GeneralUtils.stmt(
+                    GeneralUtils.callX(inner, 'init')
+            )], false)
+            inner.innerClasses.each { InnerClassNode secondInner ->
+                registerInners(predicate, inner, baseType, targetField)
+            }
         }
     }
 
