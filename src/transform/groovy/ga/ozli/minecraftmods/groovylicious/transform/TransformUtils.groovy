@@ -112,10 +112,10 @@ class TransformUtils {
     }
 
     static ArgumentListExpression conditionalArgs(@Nullable final /** <Closure<Expression> | Expression> */ Object... expressions) {
-        List<Expression> list = new ArrayList<>(expressions.length)
+        final List<Expression> list = new ArrayList<>(expressions.length)
         for (Object expression : expressions) {
             if (expression instanceof Closure<Expression>) {
-                Expression maybeExpression = (expression as Closure<Expression>).call()
+                final Expression maybeExpression = (expression as Closure<Expression>).call()
                 if (maybeExpression !== null) list.add(maybeExpression)
             } else if (expression !== null) {
                 list.add(expression as Expression)
@@ -125,8 +125,8 @@ class TransformUtils {
     }
 
     static ArgumentListExpression conditionalArgs(final List<Expression> nullableExpressions) {
-        List<Expression> list = new ArrayList<>(nullableExpressions.size())
-        for (Expression expression : nullableExpressions) {
+        final List<Expression> list = new ArrayList<>(nullableExpressions.size())
+        for (final Expression expression : nullableExpressions) {
             if (expression !== null) list.add(expression)
         }
         return new ArgumentListExpression(list)

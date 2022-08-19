@@ -31,7 +31,6 @@ import static org.objectweb.asm.Opcodes.*
 @GroovyASTTransformation(phase = CompilePhase.CANONICALIZATION)
 class ConfigASTTransformation extends AbstractASTTransformation {
 
-    // todo: support Lists
     // todo: caching of float/short/byte casts(?)
 
     private static final boolean DEBUG = false
@@ -42,6 +41,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
     private static final ClassNode LIST_TYPE = ClassHelper.make(List)
     private static final ClassNode SUPPLIERS_TYPE = ClassHelper.make(Suppliers)
     private static final ClassNode PREDICATES_TYPE = ClassHelper.make(Predicates)
+    private static final ClassNode CONFIG_SPEC_TYPE = ClassHelper.make(ForgeConfigSpec)
     private static final ClassNode MOD_TYPE = ClassHelper.make(GMod)
 
     ModConfig.Type configType
@@ -55,7 +55,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         final AnnotationNode configAnnotation = nodes[0] as AnnotationNode
         final AnnotatedNode targetNode = nodes[1] as AnnotatedNode
 
-        // make sure the @ModConfig annotation is only applied to classes
+        // make sure the @Config annotation is only applied to classes
         if (targetNode instanceof ClassNode) {
             configDataClass = targetNode as ClassNode
         } else {
@@ -64,8 +64,10 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         }
 
         // make sure the @ModConfig annotation isn't applied to empty classes
-        if (configDataClass.properties.isEmpty() && !configDataClass.innerClasses.hasNext())
+        if (configDataClass.properties.isEmpty() && !configDataClass.innerClasses.hasNext()) {
             addError("Unable to detect any properties or sub-classes inside class '${configDataClass.name}' annotated with '${configAnnotation.classNode.name}'", configDataClass)
+            return
+        }
 
         // get the configType and modId from the annotation
         configType = getMemberConfigType(configAnnotation, configDataClass)
@@ -73,20 +75,22 @@ class ConfigASTTransformation extends AbstractASTTransformation {
 
         if (DEBUG) println SV(configType, modId)
 
-        // @ModConfig dataclasses need an init() method for classloading itself and its inner classes (config groups)
+        // @Config dataclasses need an init() method for classloading itself and its inner classes (config groups)
         // Check if a compatible one already exists...
+        final boolean hasExplicitRootInitMethod
         MethodNode rootInitMethod = configDataClass.methods.find { method ->
             method.returnType == ClassHelper.VOID_TYPE && method.isStatic() && method.name == 'init'
         }
         // ...if it doesn't, make one and add it to the configDataClass
         if (rootInitMethod === null) {
+            hasExplicitRootInitMethod = false
             rootInitMethod = TransformUtils.addStaticMethod(
                     targetClassNode: configDataClass,
                     methodName: 'init',
             )
 
             // If we needed to generate our own init method, we'll probably need to handle calling it ourselves too...
-            // Let's see if any of the outer class are annotated with @Mojo or @Mod.
+            // Let's see if any of the outer class is annotated with @GMod.
             boolean foundModMainClass = false
             if (DEBUG) println SV(configDataClass.outerClasses)
             if (!configDataClass.outerClasses.empty) {
@@ -94,7 +98,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                     if (DEBUG) println SV(outerClass)
                     final boolean isModMainClass = outerClass.annotations*.classNode.find { it == MOD_TYPE }
 
-                    // We found an outer class annotated with @Mojo or @Mod, so we know that this configDataClass is inside
+                    // We found an outer class annotated with @GMod, so we know that this configDataClass is inside
                     // the Mod's main class and can add a static { configDataClass.init() } to it
                     if (isModMainClass) {
                         foundModMainClass = true
@@ -107,9 +111,9 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                 }
             }
             if (!foundModMainClass) {
-                // Looks like the @Mojo/@Mod is in a different file, let's register a transform to the
-                // GroovyliciousMojoTransformRegistry to add a static { configDataClass.init() } to the Mod's main class
-                if (DEBUG) println "Adding transform to @GroovyliciousMod"
+                // Looks like the @GMod is in a different file, let's register a transform to the
+                // GModASTTransformer to add a static { configDataClass.init() } to the Mod's main class
+                if (DEBUG) println "Adding transform to @GMod"
                 GModASTTransformer.registerTransformer { ClassNode modClass, AnnotationNode modAnnotation, SourceUnit source$ ->
                     if (DEBUG) println "Adding a call to ${configDataClass.nameWithoutPackage}'s init() method from ${modClass.name}"
                     modClass.addStaticInitializerStatements([
@@ -119,6 +123,8 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                     ], false)
                 }
             }
+        } else {
+            hasExplicitRootInitMethod = true
         }
 
         // loop through all the properties in the configDataClass and setup the relevant config initializers, getters and setters
@@ -134,63 +140,53 @@ class ConfigASTTransformation extends AbstractASTTransformation {
             final nestedAnn = configGroup.annotations.find { it.classNode == GROUP_TYPE }
             if (nestedAnn === null && excludeGroupsWithoutAnnotation) return
             if (nestedAnn !== null && getMemberValue(nestedAnn, 'exclude')) return
-            generateConfigGroup(configGroup, rootInitMethod)
+            generateConfigGroup(configGroup, configDataClass)
         }
 
-        // @Generated
-        // public static final ForgeConfigSpec $configSpec = $configBuilder.build()
-        TransformUtils.addField(
-                targetClassNode: configDataClass,
-                fieldName: '$configSpec',
-                modifiers: ACC_PRIVATE | ACC_STATIC | ACC_FINAL,
-                type: ClassHelper.makeCached(ForgeConfigSpec),
-                initialValue: GeneralUtils.callX(configBuilderVariable, 'build')
-        )
+        // If there's an explicitly defined ForgeConfigSpec field, let's use it
+        String configSpecFieldName = configDataClass.fields.find {
+            it.type == CONFIG_SPEC_TYPE && it.isStatic()
+        }?.name
+        // If not, let's generate one
+        if (configSpecFieldName === null) {
+            configSpecFieldName = '$configSpec'
 
-        // static {
-        //     ModLoadingContext.get().registerConfig(configType, $configSpec, modId)
-        // }
-        configDataClass.addStaticInitializerStatements([
-                GeneralUtils.stmt(
-                        GeneralUtils.callX(
-                                GeneralUtils.callX(
-                                        new ClassExpression(ClassHelper.make(ModLoadingContext)),
-                                        'get'
-                                ),
-                                'registerConfig',
-                                TransformUtils.conditionalArgs(
-                                        GeneralUtils.propX(
-                                                new ClassExpression(ClassHelper.make(ModConfig.Type)),
-                                                configType.name()
-                                        ),
-                                        GeneralUtils.varX('$configSpec', ClassHelper.makeCached(ForgeConfigSpec)),
-                                        { ->
-                                            if (modId === null) {
-                                                return new GStringExpression(
-                                                        '',
-                                                        [
-                                                                ConstantExpression.EMPTY_STRING, // will be filled in by the first entry of the array below
-                                                                GeneralUtils.constX('-' + configType.name().toLowerCase() + '.toml')
-                                                        ],
-                                                        [
-                                                                // this.getModule().getName()
-                                                                GeneralUtils.callX(
-                                                                        GeneralUtils.callThisX('getModule'),
-                                                                        'getName'
-                                                                ) as Expression
-                                                        ]
-                                                )
-                                            } else {
-                                                return GeneralUtils.constX(
-                                                        // the modId is defined in the config annotation, so let's use it
-                                                        modId.toLowerCase() + '-' + configType.name().toLowerCase() + '.toml'
-                                                )
-                                            }
-                                        }
-                                )
-                        )
-                )
-        ], false)
+            // @Generated
+            // public static final ForgeConfigSpec $configSpec = $configBuilder.build()
+            TransformUtils.addField(
+                    targetClassNode: configDataClass,
+                    fieldName: '$configSpec',
+                    modifiers: ACC_PUBLIC | ACC_STATIC | ACC_FINAL,
+                    type: CONFIG_SPEC_TYPE,
+                    initialValue: GeneralUtils.callX(configBuilderVariable, 'build')
+            )
+        }
+        final VariableExpression configSpecVariable = new VariableExpression(configSpecFieldName, CONFIG_SPEC_TYPE)
+
+        if (!hasExplicitRootInitMethod) {
+            // static {
+            //     ModLoadingContext.get().registerConfig(configType, $configSpec, modId)
+            // }
+            configDataClass.addStaticInitializerStatements([
+                    GeneralUtils.stmt(
+                            GeneralUtils.callX(
+                                    GeneralUtils.callX(
+                                            new ClassExpression(ClassHelper.make(ModLoadingContext)),
+                                            'get'
+                                    ),
+                                    'registerConfig',
+                                    GeneralUtils.args(
+                                            GeneralUtils.propX(
+                                                    new ClassExpression(ClassHelper.make(ModConfig.Type)),
+                                                    configType.name()
+                                            ),
+                                            configSpecVariable,
+                                            GeneralUtils.constX(modId.toLowerCase() + '-' + configType.name().toLowerCase() + '.toml')
+                                    )
+                            )
+                    )
+            ], false)
+        }
     }
 
     static ModConfig.Type getMemberConfigType(AnnotationNode annotation, ClassNode annotatedClass) {
@@ -259,7 +255,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
     }
 
     void generateConfigValue(ClassNode targetClassNode, PropertyNode property, boolean excludeFieldsWithoutAnnotation) {
-        if (property.type == CONFIG_BUILDER_TYPE) return // don't generate config values for the ForgeConfigSpec.Builder
+        if (property.type == CONFIG_BUILDER_TYPE || property.type == CONFIG_SPEC_TYPE) return // don't generate config values for the ForgeConfigSpec.Builder
         final annotation = property.annotations.find { it.classNode == CONFIG_VALUE_TYPE }
         if (annotation !== null && getMemberStringValue(annotation, 'exclude')) return
         if (annotation === null && excludeFieldsWithoutAnnotation) return
@@ -478,14 +474,14 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         )
     }
 
-    void generateConfigGroup(ClassNode groupClass, MethodNode outerInitMethod) {
+    void generateConfigGroup(ClassNode groupClass, ClassNode outerClass) {
         if (groupClass.modifiers != (groupClass.modifiers | ACC_STATIC)) {
             addError('Non-static config groups are not supported', groupClass)
             return
         }
 
-        // Use an init() method if already explicitly declared, otherwise we'll make our own
-        final MethodNode groupInitMethod = groupClass.methods.find { method ->
+        // Make our own init() method if one isn't already explicitly declared
+        groupClass.methods.find { method ->
             method.returnType == ClassHelper.VOID_TYPE && method.name == 'init' && method.isStatic()
         } ?: TransformUtils.addStaticMethod(targetClassNode: groupClass, methodName: 'init')
         final annotation = groupClass.annotations.find { it.classNode == GROUP_TYPE }
@@ -496,9 +492,9 @@ class ConfigASTTransformation extends AbstractASTTransformation {
             .orElse(groupClass.nameWithoutPackage.split(/\$/).last())
 
         /*
-         * @ModConfig
+         * @Config
          * static class Config {
-         *     static void init() {
+         *     static {
          *         $configBuilder.push("GroupName")
          *         GroupName.init()
          *         $configBuilder.pop()
@@ -509,7 +505,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
          *     }
          * }
          */
-        (outerInitMethod.code as BlockStatement).addStatements([
+        outerClass.addStaticInitializerStatements([
                 // $configBuilder.push 'groupClass'
                 GeneralUtils.stmt(GeneralUtils.callX(
                         configBuilderVariable,
@@ -524,7 +520,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
 
                 // $configBuilder.pop()
                 GeneralUtils.stmt(GeneralUtils.callX(configBuilderVariable, 'pop'))
-        ])
+        ], false)
 
         final boolean excludeFieldsWithoutAnnotation = annotation !== null && getMemberValue(annotation, 'excludeFieldsWithoutAnnotation')
         final boolean excludeGroupsWithoutAnnotation = annotation !== null && getMemberValue(annotation, 'excludeGroupsWithoutAnnotation')
@@ -537,7 +533,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
             final nestedAnn = nestedConfigGroup.annotations.find { it.classNode == GROUP_TYPE }
             if (nestedAnn === null && excludeGroupsWithoutAnnotation) return
             if (nestedAnn !== null && getMemberValue(nestedAnn, 'exclude')) return
-            generateConfigGroup(nestedConfigGroup, groupInitMethod)
+            generateConfigGroup(nestedConfigGroup, groupClass)
         }
     }
 
