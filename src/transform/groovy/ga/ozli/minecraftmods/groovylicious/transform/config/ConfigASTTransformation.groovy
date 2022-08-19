@@ -102,6 +102,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                 // GroovyliciousMojoTransformRegistry to add a static { configDataClass.init() } to the Mod's main class
                 if (DEBUG) println "Adding transform to @GroovyliciousMod"
                 GModASTTransformer.registerTransformer { ClassNode modClass, AnnotationNode modAnnotation, SourceUnit source$ ->
+                    if (getMemberStringValue(modClass.getAnnotations(MOD_TYPE).find(), 'value') != modId) return
                     if (DEBUG) println "Adding a call to ${configDataClass.nameWithoutPackage}'s init() method from ${modClass.name}"
                     modClass.addStaticInitializerStatements([
                             GeneralUtils.stmt(
