@@ -232,7 +232,7 @@ final class DefRegisterASTTransformer extends AbstractASTTransformation {
         final regObjectType = GenericsUtils.makeClassSafeWithGenerics(RegistryObject, property.type)
         final field = TransformUtils.addField(
                 targetClassNode: clazz,
-                fieldName: "\$registryFieldFor${property.name.capitalize()}",
+                fieldName: "\$registryObjectFor${property.name.capitalize()}",
                 modifiers: Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC,
                 type: regObjectType,
                 initialValue: GeneralUtils.bytecodeX(regObjectType) {
