@@ -65,9 +65,13 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
     private void transformClass(AnnotationNode annotationNode, ClassNode targetClass, List<RegistroidAddon> addons) {
         final closure = annotationNode.getMember('value') as ClosureExpression
         if (closure === null) {
-            addError('Class-level @Registroid requires providing the registries in a closure!', targetClass)
+            // One may use it for addons only
             return
         }
+        final existingDRs = targetClass.fields.stream()
+            .filter { it.type == DEFERRED_REGISTER_TYPE }
+            .map { it.type.genericsTypes[0].type }
+            .toList()
         final expression = (((BlockStatement) closure.code).getStatements().find() as ExpressionStatement).expression
 
         List<FieldNode> drFields = []
@@ -90,7 +94,8 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
             final property = (it.property as ConstantExpression).value as String
             final registryField = declaringClass.getField(property)
             final dr = generateDR(targetClass, registryField)
-            if (!drFields.any { it.type == dr.type.genericsTypes[0].type })
+            final drGenericType = dr.type.genericsTypes[0].type
+            if (!drFields.any { it.type == drGenericType } && !existingDRs.contains(drGenericType))
                 drFields.push(dr)
         }
 
