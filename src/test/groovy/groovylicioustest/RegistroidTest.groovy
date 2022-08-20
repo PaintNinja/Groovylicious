@@ -16,7 +16,7 @@ import net.minecraftforge.registries.ForgeRegistries
 @POJO
 @CompileStatic
 @Registroid({ [Registry.ITEM, ForgeRegistries.BLOCKS, Registry.SOUND_EVENT_REGISTRY] })
-class AutoRegisterTest {
+class RegistroidTest {
     static final SoundEvent MY_SOUND = new SoundEvent(new ResourceLocation('groovylicioustest', 'my_sound'))
     static final Block MY_BLOCK = new Block(BlockBehaviour.Properties.of(Material.DIRT))
     static final Item MY_BI = new BlockItem(MY_BLOCK, new Item.Properties())
