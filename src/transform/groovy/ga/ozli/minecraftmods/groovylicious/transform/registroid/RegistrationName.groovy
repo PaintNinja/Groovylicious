@@ -26,5 +26,10 @@ import java.lang.annotation.*
 @interface RegistrationName {
     String value()
 
+    /**
+     * Only used by the inner class mode. <br>
+     * If the prefix should be applied even when fields explicitly declare a {@linkplain #value() name}. <br>
+     * Defaults to false.
+     */
     boolean alwaysApply() default false
 }
