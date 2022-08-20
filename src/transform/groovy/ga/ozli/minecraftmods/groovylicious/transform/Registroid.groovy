@@ -13,8 +13,8 @@ import java.lang.annotation.Target
 @CompileStatic
 @Target([ElementType.FIELD, ElementType.TYPE])
 @Retention(RetentionPolicy.SOURCE)
-@GroovyASTTransformationClass(value = 'ga.ozli.minecraftmods.groovylicious.transform.defregister.DefRegisterASTTransformer')
-@interface AutoRegister {
+@GroovyASTTransformationClass(value = 'ga.ozli.minecraftmods.groovylicious.transform.registroid.RegistroidASTTransformer')
+@interface Registroid {
     boolean includeInnerClasses() default false
 
     boolean registerToBus() default true

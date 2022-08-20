@@ -1,4 +1,4 @@
-package ga.ozli.minecraftmods.groovylicious.transform.defregister
+package ga.ozli.minecraftmods.groovylicious.transform.registroid
 
 import com.matyrobbrt.gml.transform.api.ModRegistry
 import com.matyrobbrt.gml.transform.gmods.GModASTTransformer
@@ -9,7 +9,6 @@ import groovyjarjarasm.asm.Type as JarType
 import net.minecraft.core.Registry
 import net.minecraft.resources.ResourceKey
 import net.minecraftforge.registries.DeferredRegister
-import net.minecraftforge.registries.ForgeRegistry
 import net.minecraftforge.registries.IForgeRegistry
 import net.minecraftforge.registries.RegistryObject
 import org.codehaus.groovy.ast.*
@@ -28,13 +27,12 @@ import org.codehaus.groovy.transform.GroovyASTTransformation
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 
-import java.lang.reflect.Modifier
 import java.util.function.Predicate
 import java.util.function.Supplier
 
 @CompileStatic
 @GroovyASTTransformation
-final class DefRegisterASTTransformer extends AbstractASTTransformation {
+final class RegistroidASTTransformer extends AbstractASTTransformation {
     public static final ClassNode REGISTRATION_NAME_TYPE = ClassHelper.make(RegistrationName)
     public static final String REGISTER_DESC = Type.getMethodDescriptor(Type.getType(RegistryObject), Type.getType(String), Type.getType(Supplier))
     public static final ClassNode RESOURCE_KEY_TYPE = ClassHelper.make(ResourceKey)
@@ -53,7 +51,7 @@ final class DefRegisterASTTransformer extends AbstractASTTransformation {
             return
         }
 
-        // make sure the @AutoRegister annotation is only applied to fields / classes
+        // make sure the annotation is only applied to fields / classes
         if (!(targetNode instanceof FieldNode)) {
             addError("The ${annotation.classNode.name} annotation can only be applied to fields and classes.", targetNode)
             return
@@ -66,7 +64,7 @@ final class DefRegisterASTTransformer extends AbstractASTTransformation {
     private void transformClass(AnnotationNode annotationNode, ClassNode targetClass) {
         final closure = annotationNode.getMember('value') as ClosureExpression
         if (closure === null) {
-            addError('Class-level @AutoRegister requires providing the registries in a closure!', targetClass)
+            addError('Class-level @Registroid requires providing the registries in a closure!', targetClass)
             return
         }
         final expression = (((BlockStatement) closure.code).getStatements().find() as ExpressionStatement).expression
@@ -169,7 +167,7 @@ final class DefRegisterASTTransformer extends AbstractASTTransformation {
         if (targetClass.properties.isEmpty())
             addError("Unable to detect any properties inside class '${targetClass.name}' annotated with '${annotation.classNode.name}'", targetClass)
         if (!targetField.isStatic()) {
-            addError('@AutoRegister can only be applied to static fields.', targetField)
+            addError('@Registroid can only be applied to static fields.', targetField)
             return
         }
 

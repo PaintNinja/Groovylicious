@@ -1,4 +1,4 @@
-package ga.ozli.minecraftmods.groovylicious.transform.defregister
+package ga.ozli.minecraftmods.groovylicious.transform.registroid
 
 import groovy.transform.CompileStatic
 
