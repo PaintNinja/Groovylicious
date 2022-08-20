@@ -15,6 +15,7 @@ import org.codehaus.groovy.ast.expr.CastExpression
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.codehaus.groovy.ast.stmt.Statement
+import org.codehaus.groovy.ast.tools.GeneralUtils
 
 import javax.annotation.Nullable
 
@@ -138,5 +139,13 @@ class TransformUtils {
     static Expression conditionalCast(@Nullable final ClassNode nullableType, final Expression expression) {
         if (nullableType === null) return expression
         else return new CastExpression(nullableType, expression)
+    }
+
+    static boolean isSubclass(final ClassNode target, final ClassNode superType) {
+        if (superType.isInterface()) {
+            return GeneralUtils.isOrImplements(target, superType)
+        } else {
+            return target.isDerivedFrom(superType)
+        }
     }
 }

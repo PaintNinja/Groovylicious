@@ -12,11 +12,7 @@ import net.minecraftforge.registries.DeferredRegister
 import net.minecraftforge.registries.IForgeRegistry
 import net.minecraftforge.registries.RegistryObject
 import org.codehaus.groovy.ast.*
-import org.codehaus.groovy.ast.expr.ClassExpression
-import org.codehaus.groovy.ast.expr.ClosureExpression
-import org.codehaus.groovy.ast.expr.ConstantExpression
-import org.codehaus.groovy.ast.expr.ListExpression
-import org.codehaus.groovy.ast.expr.PropertyExpression
+import org.codehaus.groovy.ast.expr.*
 import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codehaus.groovy.ast.tools.GeneralUtils
@@ -39,6 +35,7 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
     public static final ClassNode REGISTRY_TYPE = ClassHelper.make(Registry)
     public static final ClassNode FORGE_REGISTRY_TYPE = ClassHelper.make(IForgeRegistry)
     public static final ClassNode DEFERRED_REGISTER_TYPE = ClassHelper.make(DeferredRegister)
+    public static final ClassNode ADDON_CLASS_TYPE = ClassHelper.make(RegistroidAddonClass)
     @Override
     void visit(ASTNode[] nodes, SourceUnit source) {
         init(nodes, source) // ensure that nodes is [AnnotationNode, AnnotatedNode]
@@ -47,7 +44,11 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
         final AnnotatedNode targetNode = nodes[1] as AnnotatedNode
 
         if (targetNode instanceof ClassNode) {
-            transformClass(annotation, targetNode)
+            transformClass(annotation, targetNode, targetNode.annotations.stream().flatMap {
+                it.classNode.annotations.stream()
+            }.filter { it.classNode == ADDON_CLASS_TYPE }
+            .map { Class.forName(getMemberClassValue(it, 'value').name, true, getClass().classLoader) }
+            .map { it.getDeclaredConstructor().newInstance() as RegistroidAddon }.toList())
             return
         }
 
@@ -61,7 +62,7 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
         transformField(annotation, targetClass, targetField)
     }
 
-    private void transformClass(AnnotationNode annotationNode, ClassNode targetClass) {
+    private void transformClass(AnnotationNode annotationNode, ClassNode targetClass, List<RegistroidAddon> addons) {
         final closure = annotationNode.getMember('value') as ClosureExpression
         if (closure === null) {
             addError('Class-level @Registroid requires providing the registries in a closure!', targetClass)
@@ -84,11 +85,45 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
             final registryField = declaringClass.getField(property)
             drFields.push(generateDR(targetClass, registryField))
         }
+        addons.stream().flatMap {it.requiredRegistries.stream()}.forEach {
+            final declaringClass = (it.getObjectExpression() as ClassExpression).type
+            final property = (it.property as ConstantExpression).value as String
+            final registryField = declaringClass.getField(property)
+            final dr = generateDR(targetClass, registryField)
+            if (!drFields.any { it.type == dr.type.genericsTypes[0].type })
+                drFields.push(dr)
+        }
+
+        List.copyOf(targetClass.properties).each { PropertyNode prop ->
+            addons.each {
+                if (it.supportedTypes.any { TransformUtils.isSubclass(prop.type, it) }) {
+                    it.makeExtra(annotationNode, targetClass, prop, this)
+                }
+            }
+        }
+
+        if (getMemberValue(annotationNode, 'includeInnerClasses')) {
+            targetClass.innerClasses.each {
+                registerInnerAddons(annotationNode, targetClass, it, addons)
+            }
+        }
+
         drFields = drFields.stream().filter { it !== null }.toList()
         if (hasDuplicates(drFields, targetClass)) return
         drFields.each {
             transformField(annotationNode, targetClass, it)
         }
+    }
+
+    private void registerInnerAddons(final AnnotationNode annotationNode, final ClassNode targetClass, final InnerClassNode innerClass, final List<RegistroidAddon> addons) {
+        List.copyOf(innerClass.properties).each { PropertyNode prop ->
+            addons.each {
+                if (it.supportedTypes.any { TransformUtils.isSubclass(prop.type, it) }) {
+                    it.makeExtra(annotationNode, targetClass, prop, this)
+                }
+            }
+        }
+        innerClass.innerClasses.each { registerInnerAddons(annotationNode, targetClass, it, addons) }
     }
 
     private boolean hasDuplicates(List<FieldNode> fields, ClassNode targetClass) {
@@ -124,7 +159,7 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
         final modId = ModRegistry.getData(targetClass.packageName)?.modId()
         if (modId === null) {
             addError('Could not determine modId for AutoRegister', targetClass)
-            return
+            return null
         }
         return TransformUtils.addField(
                 fieldName: registryField.name.replace('_REGISTRY', 'S').toUpperCase(Locale.ROOT),
@@ -145,7 +180,7 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
         final modId = ModRegistry.getData(targetClass.packageName)?.modId()
         if (modId === null) {
             addError('Could not determine modId for AutoRegister', targetClass)
-            return
+            return null
         }
         return TransformUtils.addField(
                 fieldName: registryField.name.toUpperCase(Locale.ROOT),
@@ -166,7 +201,7 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
         final modId = ModRegistry.getData(targetClass.packageName)?.modId()
         if (modId === null) {
             addError('Could not determine modId for AutoRegister', targetClass)
-            return
+            return null
         }
         return TransformUtils.addField(
                 fieldName: (registryField.name + 'S').toUpperCase(Locale.ROOT),
@@ -191,12 +226,7 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
 
         final baseType = targetField.type.genericsTypes.size() == 0 ? ClassHelper.OBJECT_TYPE : targetField.type.genericsTypes[0].type
 
-        Predicate<ClassNode> predicate
-        if (baseType.isInterface()) {
-            predicate = { ClassNode it -> GeneralUtils.isOrImplements(it, baseType) }
-        } else {
-            predicate = { ClassNode it -> it.isDerivedFrom(baseType) }
-        }
+        final Predicate<ClassNode> predicate = { ClassNode it -> TransformUtils.isSubclass(it, baseType) }
 
         targetClass.properties.each {
             if (predicate.test(it.type)) {
@@ -280,7 +310,7 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
         }))
     }
 
-    private String getRegName(final PropertyNode propertyNode) {
+    String getRegName(final PropertyNode propertyNode) {
         final regNameOnClass = propertyNode.declaringClass.annotations.find { it.classNode == REGISTRATION_NAME_TYPE }
         final boolean alwaysApply = regNameOnClass === null ? false : getMemberValue(regNameOnClass, 'alwaysApply')
         final prefix = regNameOnClass === null ? '' : getMemberStringValue(regNameOnClass, 'value')
@@ -290,6 +320,12 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
             return alwaysApply ? prefix + name : name
         }
         return prefix + propertyNode.name.toLowerCase(Locale.ROOT)
+    }
+
+    @SuppressWarnings('GrMethodMayBeStatic')
+    String getInitialRegName(final PropertyNode propertyNode) {
+        final ann = propertyNode.annotations.find { it.classNode == REGISTRATION_NAME_TYPE }
+        return ann === null ? propertyNode.name.toLowerCase(Locale.ROOT) : getMemberStringValue(ann, 'value')
     }
 
     private static String getInternalName(ClassNode classNode) {
