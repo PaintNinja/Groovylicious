@@ -24,11 +24,15 @@ import java.lang.annotation.*
 @Retention(RetentionPolicy.SOURCE)
 @Target([ElementType.FIELD, ElementType.TYPE])
 @interface RegistrationName {
+    /**
+     * When applied on a field, this property can be used to give a field a custom name. <br>
+     * When applied on a class, this value will be appended as a prefix to fields inside it, as per the docs of {@link RegistrationName}.
+     */
     String value()
 
     /**
      * Only used by the inner class mode. <br>
-     * If the prefix should be applied even when fields explicitly declare a {@linkplain #value() name}. <br>
+     * If the prefix should be applied even when fields explicitly declare a {@linkplain RegistrationName#value() name}. <br>
      * Defaults to false.
      */
     boolean alwaysApply() default false

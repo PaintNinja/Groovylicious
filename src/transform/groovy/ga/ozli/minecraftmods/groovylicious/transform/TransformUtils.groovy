@@ -7,15 +7,19 @@ import groovy.transform.NamedVariant
 import org.codehaus.groovy.ast.AnnotationNode
 import org.codehaus.groovy.ast.ClassHelper
 import org.codehaus.groovy.ast.ClassNode
+import org.codehaus.groovy.ast.ConstructorNode
 import org.codehaus.groovy.ast.FieldNode
 import org.codehaus.groovy.ast.MethodNode
 import org.codehaus.groovy.ast.Parameter
 import org.codehaus.groovy.ast.expr.ArgumentListExpression
 import org.codehaus.groovy.ast.expr.CastExpression
+import org.codehaus.groovy.ast.expr.ConstructorCallExpression
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.stmt.BlockStatement
+import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codehaus.groovy.ast.stmt.Statement
 import org.codehaus.groovy.ast.tools.GeneralUtils
+import org.objectweb.asm.Opcodes
 
 import javax.annotation.Nullable
 
@@ -147,5 +151,15 @@ class TransformUtils {
         } else {
             return target.isDerivedFrom(superType)
         }
+    }
+
+    static ConstructorNode getOrCreatorCtor(final ClassNode classNode) {
+        return classNode.declaredConstructors.find {
+            !it.firstStatementIsSpecialConstructorCall()
+        } ?: classNode.addConstructor(ACC_PUBLIC, Parameter.EMPTY_ARRAY, ClassNode.EMPTY_ARRAY, new BlockStatement())
+    }
+
+    static void addLastCtorStatement(final ClassNode classNode, final Statement statement) {
+        (getOrCreatorCtor(classNode).code as BlockStatement).addStatement(statement)
     }
 }

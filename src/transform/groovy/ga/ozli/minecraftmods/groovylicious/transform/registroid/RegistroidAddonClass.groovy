@@ -15,7 +15,7 @@ import java.lang.annotation.Target
 @Documented
 @CompileStatic
 @Target(ElementType.TYPE)
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.CLASS)
 @interface RegistroidAddonClass {
     /**
      * A class implementing {@linkplain RegistroidAddon} which will be instantiated, and used as an addon by the {@linkplain ga.ozli.minecraftmods.groovylicious.transform.Registroid Registroid system}.

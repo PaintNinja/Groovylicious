@@ -18,9 +18,19 @@ import org.codehaus.groovy.ast.expr.PropertyExpression
  */
 @CompileStatic
 interface RegistroidAddon {
-    void makeExtra(AnnotationNode registroidAnnotation, ClassNode targetClass, PropertyNode property, RegistroidASTTransformer transformer)
+    /**
+     * Processes a property of one of the {@linkplain #getSupportedTypes() supported types}.
+     */
+    void process(AnnotationNode registroidAnnotation, ClassNode targetClass, PropertyNode property, RegistroidASTTransformer transformer)
 
+    /**
+     * The types this addon can process. (e.g. {@linkplain net.minecraft.world.item.Item Item}, {@linkplain net.minecraft.world.level.block.Block block})
+     */
     List<ClassNode> getSupportedTypes()
 
+    /**
+     * A list of property expressions representing the registries this addon needs in order to properly work.
+     * @see ga.ozli.minecraftmods.groovylicious.transform.Registroid#value()
+     */
     List<PropertyExpression> getRequiredRegistries()
 }

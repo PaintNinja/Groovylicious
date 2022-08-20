@@ -26,7 +26,7 @@ class BlockItemAddonTransformer implements RegistroidAddon {
     public static final ClassNode ITEM_TYPE = ClassHelper.make(Item)
 
     @Override
-    void makeExtra(AnnotationNode registroidAnnotation, ClassNode targetClass, PropertyNode property, RegistroidASTTransformer transformer) {
+    void process(AnnotationNode registroidAnnotation, ClassNode targetClass, PropertyNode property, RegistroidASTTransformer transformer) {
         final myAnnotation = targetClass.annotations.find { it.classNode == ANNOTATION_TYPE }
         final propertyAnnotation = property.annotations.find { it.classNode == ANNOTATION_TYPE }
         if (propertyAnnotation?.members?.get('value') === null && myAnnotation.getMember('value') === null) return

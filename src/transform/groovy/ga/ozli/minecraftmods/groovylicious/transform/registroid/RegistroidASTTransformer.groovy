@@ -17,18 +17,21 @@ import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codehaus.groovy.ast.tools.GeneralUtils
 import org.codehaus.groovy.ast.tools.GenericsUtils
+import org.codehaus.groovy.control.CompilePhase
 import org.codehaus.groovy.control.SourceUnit
 import org.codehaus.groovy.transform.AbstractASTTransformation
 import org.codehaus.groovy.transform.GroovyASTTransformation
+import org.codehaus.groovy.transform.TransformWithPriority
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 
+import java.lang.reflect.Modifier
 import java.util.function.Predicate
 import java.util.function.Supplier
 
 @CompileStatic
-@GroovyASTTransformation
-final class RegistroidASTTransformer extends AbstractASTTransformation {
+@GroovyASTTransformation(phase = CompilePhase.SEMANTIC_ANALYSIS)
+final class RegistroidASTTransformer extends AbstractASTTransformation implements TransformWithPriority {
     public static final ClassNode REGISTRATION_NAME_TYPE = ClassHelper.make(RegistrationName)
     public static final String REGISTER_DESC = Type.getMethodDescriptor(Type.getType(RegistryObject), Type.getType(String), Type.getType(Supplier))
     public static final ClassNode RESOURCE_KEY_TYPE = ClassHelper.make(ResourceKey)
@@ -64,15 +67,17 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
 
     private void transformClass(AnnotationNode annotationNode, ClassNode targetClass, List<RegistroidAddon> addons) {
         final closure = annotationNode.getMember('value') as ClosureExpression
+        Expression expression
         if (closure === null) {
             // One may use it for addons only
-            return
+            expression = new ListExpression()
+        } else {
+            expression = (((BlockStatement) closure.code).getStatements().find() as ExpressionStatement).expression
         }
         final existingDRs = targetClass.fields.stream()
             .filter { it.type == DEFERRED_REGISTER_TYPE }
             .map { it.type.genericsTypes[0].type }
             .toList()
-        final expression = (((BlockStatement) closure.code).getStatements().find() as ExpressionStatement).expression
 
         List<FieldNode> drFields = []
         if (expression instanceof ListExpression) {
@@ -102,7 +107,7 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
         List.copyOf(targetClass.properties).each { PropertyNode prop ->
             addons.each {
                 if (it.supportedTypes.any { TransformUtils.isSubclass(prop.type, it) }) {
-                    it.makeExtra(annotationNode, targetClass, prop, this)
+                    it.process(annotationNode, targetClass, prop, this)
                 }
             }
         }
@@ -124,7 +129,7 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
         List.copyOf(innerClass.properties).each { PropertyNode prop ->
             addons.each {
                 if (it.supportedTypes.any { TransformUtils.isSubclass(prop.type, it) }) {
-                    it.makeExtra(annotationNode, targetClass, prop, this)
+                    it.process(annotationNode, targetClass, prop, this)
                 }
             }
         }
@@ -228,6 +233,13 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
             addError('@Registroid can only be applied to static fields.', targetField)
             return
         }
+        if (!targetField.isPublic()) {
+            final wasFinal = targetField.isFinal()
+            targetField.modifiers = Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC
+            if (wasFinal) {
+                targetField.modifiers = targetField.modifiers | Opcodes.ACC_FINAL
+            }
+        }
 
         final baseType = targetField.type.genericsTypes.size() == 0 ? ClassHelper.OBJECT_TYPE : targetField.type.genericsTypes[0].type
 
@@ -243,11 +255,12 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
             registerInners(predicate, targetClass, baseType, targetField)
         }
 
-        if (annotation.members.containsKey('registerToBus') && !getMemberValue(annotation, 'registerToBus')) return
-        GModASTTransformer.registerTransformer(ModRegistry.getData(targetClass.packageName)?.modId()) { ClassNode classNode, AnnotationNode annotationNode, SourceUnit source ->
-            classNode.addObjectInitializerStatements(GeneralUtils.stmt(GeneralUtils.callX(
-                    GeneralUtils.fieldX(targetField), 'register', GeneralUtils.callX(GeneralUtils.varX('this'), 'getModBus')
-            )))
+        if ((getMemberValue(annotation, 'registerToBus') ?: true)) {
+            GModASTTransformer.registerTransformer(ModRegistry.getData(targetClass.packageName)?.modId()) { ClassNode classNode, AnnotationNode annotationNode, SourceUnit source ->
+                TransformUtils.addLastCtorStatement(classNode, GeneralUtils.stmt(GeneralUtils.callX(
+                        GeneralUtils.fieldX(targetField), 'register', GeneralUtils.callX(GeneralUtils.varX('this'), 'getModBus')
+                )))
+            }
         }
     }
 
@@ -335,5 +348,10 @@ final class RegistroidASTTransformer extends AbstractASTTransformation {
 
     private static String getInternalName(ClassNode classNode) {
         return classNode.name.replace('.' as char, '/' as char)
+    }
+
+    @Override
+    int priority() {
+        return 10
     }
 }
