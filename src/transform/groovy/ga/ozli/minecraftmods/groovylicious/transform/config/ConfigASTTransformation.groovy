@@ -103,8 +103,8 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                 }
             }
             if (!foundModMainClass) {
-                // Looks like the @Mojo/@Mod is in a different file, let's register a transform to the
-                // GroovyliciousMojoTransformRegistry to add a static { configDataClass.init() } to the Mod's main class
+                // Looks like the @GMod is in a different file, let's register a transform to the
+                // GModASTTransformer to add a static { configDataClass.init() } to the Mod's main class class
                 if (DEBUG) println "Adding transform to @GroovyliciousMod"
                 GModASTTransformer.registerTransformer(modId) { ClassNode modClass, AnnotationNode modAnnotation, SourceUnit source$ ->
                     if (DEBUG) println "Adding a call to ${configDataClass.nameWithoutPackage}'s init() method from ${modClass.name}"

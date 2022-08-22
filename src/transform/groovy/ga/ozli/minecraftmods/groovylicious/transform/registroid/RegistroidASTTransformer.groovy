@@ -79,26 +79,33 @@ final class RegistroidASTTransformer extends AbstractASTTransformation implement
             .map { it.type.genericsTypes[0].type }
             .toList()
 
+        final modId = ModRegistry.getData(targetClass.packageName)?.modId()
+        if (modId === null) {
+            addError('Could not determine modId for AutoRegister', targetClass)
+            return
+        }
+
         List<FieldNode> drFields = []
         if (expression instanceof ListExpression) {
             expression.expressions.each {
                 final val = it as PropertyExpression
                 final property = (val.property as ConstantExpression).value as String
                 final registryField = (val.getObjectExpression() as ClassExpression).type.getField(property)
-                drFields.push(generateDR(targetClass, registryField))
+                drFields.push(generateDR(targetClass, registryField, modId))
             }
         } else {
             final val = expression as PropertyExpression
             final declaringClass = (val.getObjectExpression() as ClassExpression).type
             final property = (val.property as ConstantExpression).value as String
             final registryField = declaringClass.getField(property)
-            drFields.push(generateDR(targetClass, registryField))
+            drFields.push(generateDR(targetClass, registryField, modId))
         }
+
         addons.stream().flatMap {it.requiredRegistries.stream()}.forEach {
             final declaringClass = (it.getObjectExpression() as ClassExpression).type
             final property = (it.property as ConstantExpression).value as String
             final registryField = declaringClass.getField(property)
-            final dr = generateDR(targetClass, registryField)
+            final dr = generateDR(targetClass, registryField, modId)
             final drGenericType = dr.type.genericsTypes[0].type
             if (!drFields.any { it.type == drGenericType } && !existingDRs.contains(drGenericType))
                 drFields.push(dr)
@@ -150,27 +157,22 @@ final class RegistroidASTTransformer extends AbstractASTTransformation implement
         return false
     }
 
-    private FieldNode generateDR(final ClassNode targetClass, final FieldNode registryField) {
+    private FieldNode generateDR(final ClassNode targetClass, final FieldNode registryField, final String modId) {
         if (registryField.type == RESOURCE_KEY_TYPE) {
-            makeResourceKey(targetClass, registryField)
+            makeResourceKey(targetClass, registryField, modId)
         } else if (registryField.type.isDerivedFrom(REGISTRY_TYPE)) {
-            makeRegistry(targetClass, registryField)
+            makeRegistry(targetClass, registryField, modId)
         } else if (GeneralUtils.isOrImplements(registryField.type, FORGE_REGISTRY_TYPE)) {
-            makeForgeRegistry(targetClass, registryField)
+            makeForgeRegistry(targetClass, registryField, modId)
         } else {
             addError("No known way of representing registry from ${registryField.owner.name}.${registryField.name}", registryField)
             return null
         }
     }
 
-    private FieldNode makeResourceKey(final ClassNode targetClass, final FieldNode registryField) {
+    private static FieldNode makeResourceKey(final ClassNode targetClass, final FieldNode registryField, final String modId) {
         // ResourceKey<Registry<T>>
         final type = registryField.type.genericsTypes[0].type.genericsTypes[0].type
-        final modId = ModRegistry.getData(targetClass.packageName)?.modId()
-        if (modId === null) {
-            addError('Could not determine modId for AutoRegister', targetClass)
-            return null
-        }
         return TransformUtils.addField(
                 fieldName: registryField.name.replace('_REGISTRY', 'S').toUpperCase(Locale.ROOT),
                 targetClassNode: targetClass,
@@ -184,14 +186,9 @@ final class RegistroidASTTransformer extends AbstractASTTransformation implement
         )
     }
 
-    private FieldNode makeForgeRegistry(final ClassNode targetClass, final FieldNode registryField) {
+    private static FieldNode makeForgeRegistry(final ClassNode targetClass, final FieldNode registryField, final String modId) {
         // ForgeRegistry<T>
         final type = registryField.type.genericsTypes[0].type
-        final modId = ModRegistry.getData(targetClass.packageName)?.modId()
-        if (modId === null) {
-            addError('Could not determine modId for AutoRegister', targetClass)
-            return null
-        }
         return TransformUtils.addField(
                 fieldName: registryField.name.toUpperCase(Locale.ROOT),
                 targetClassNode: targetClass,
@@ -205,14 +202,9 @@ final class RegistroidASTTransformer extends AbstractASTTransformation implement
         )
     }
 
-    private FieldNode makeRegistry(final ClassNode targetClass, final FieldNode registryField) {
+    private static FieldNode makeRegistry(final ClassNode targetClass, final FieldNode registryField, final String modId) {
         // Registry<T>
         final type = registryField.type.genericsTypes[0].type
-        final modId = ModRegistry.getData(targetClass.packageName)?.modId()
-        if (modId === null) {
-            addError('Could not determine modId for AutoRegister', targetClass)
-            return null
-        }
         return TransformUtils.addField(
                 fieldName: (registryField.name + 'S').toUpperCase(Locale.ROOT),
                 targetClassNode: targetClass,
