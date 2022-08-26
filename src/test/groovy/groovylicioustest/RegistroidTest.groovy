@@ -1,3 +1,5 @@
+//file:noinspection unused
+//file:noinspection GrFinalVariableAccess
 //file:noinspection GrDeprecatedAPIUsage
 package groovylicioustest
 
@@ -5,6 +7,7 @@ import ga.ozli.minecraftmods.groovylicious.transform.Registroid
 import ga.ozli.minecraftmods.groovylicious.transform.registroid.RegistrationName
 import ga.ozli.minecraftmods.groovylicious.transform.registroid.blockitem.BlockItemAddon
 import ga.ozli.minecraftmods.groovylicious.transform.registroid.recipetype.RecipeTypeAddon
+import ga.ozli.minecraftmods.groovylicious.transform.registroid.sound.SoundEventAddon
 import groovy.transform.CompileStatic
 import groovy.transform.stc.POJO
 import net.minecraft.core.Registry
@@ -20,10 +23,12 @@ import net.minecraftforge.registries.ForgeRegistries
 
 @POJO
 @CompileStatic
+@SoundEventAddon
 @Registroid({ [ForgeRegistries.BLOCKS, Registry.SOUND_EVENT_REGISTRY] })
 class RegistroidTest {
     static final Block SOME_TEST = new Block(BlockBehaviour.Properties.of(Material.DIRT))
-    static final SoundEvent TEST_SOUND = new SoundEvent(new ResourceLocation('groovylicioustest', 'test_sound'))
+    static final SoundEvent TEST_SOUND
+    static final SoundEvent TEST_SOUND_2 = new SoundEvent(null, .1f)
 
     @Registroid
     static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Registry.ITEM_REGISTRY, 'groovylicioustest')

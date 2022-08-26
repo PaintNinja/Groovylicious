@@ -4,6 +4,7 @@ import com.matyrobbrt.gml.transform.api.ModRegistry
 import com.matyrobbrt.gml.transform.gmods.GModASTTransformer
 import ga.ozli.minecraftmods.groovylicious.transform.TransformUtils
 import groovy.transform.CompileStatic
+import groovy.transform.Generated
 import groovyjarjarasm.asm.Handle
 import groovyjarjarasm.asm.Type as JarType
 import net.minecraft.core.Registry
@@ -200,6 +201,7 @@ final class RegistroidASTTransformer extends AbstractASTTransformation implement
                     )
                 )
         )
+        field.addAnnotation(TransformUtils.GENERATED_ANNOTATION)
         if (addToClass) {
             targetClass.addField(field)
         }
@@ -219,6 +221,7 @@ final class RegistroidASTTransformer extends AbstractASTTransformation implement
                 )
             )
         )
+        field.addAnnotation(TransformUtils.GENERATED_ANNOTATION)
         if (addToClass) {
             targetClass.addField(field)
         }
@@ -238,6 +241,7 @@ final class RegistroidASTTransformer extends AbstractASTTransformation implement
                     )
                 )
         )
+        field.addAnnotation(TransformUtils.GENERATED_ANNOTATION)
         if (addToClass) {
             targetClass.addField(field)
         }

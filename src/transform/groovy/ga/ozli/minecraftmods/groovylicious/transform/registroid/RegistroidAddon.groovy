@@ -10,10 +10,12 @@ import org.codehaus.groovy.ast.expr.PropertyExpression
  * An addon for {@linkplain ga.ozli.minecraftmods.groovylicious.transform.Registroid Registroid} systems. <br>
  * The addons are specified on classes annotated with {@linkplain ga.ozli.minecraftmods.groovylicious.transform.Registroid Registroid},
  * by annotating the class with different {@linkplain RegistroidAddonClass addon annotations}.
- *
+ * <br>
  * Addons provided by Groovylicious:
  * <ul>
  *     <li>{@linkplain ga.ozli.minecraftmods.groovylicious.transform.registroid.blockitem.BlockItemAddon BlockItem addon}</li>
+ *     <li>{@linkplain ga.ozli.minecraftmods.groovylicious.transform.registroid.recipetype.RecipeTypeAddon RecipeType addon}</li>
+ *     <li>{@linkplain ga.ozli.minecraftmods.groovylicious.transform.registroid.sound.SoundEventAddon SoundEvent addon}</li>
  * </ul>
  */
 @CompileStatic
