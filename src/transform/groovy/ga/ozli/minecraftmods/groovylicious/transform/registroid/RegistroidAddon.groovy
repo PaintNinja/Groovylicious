@@ -21,7 +21,7 @@ interface RegistroidAddon {
     /**
      * Processes a property of one of the {@linkplain #getSupportedTypes() supported types}.
      */
-    void process(AnnotationNode registroidAnnotation, ClassNode targetClass, PropertyNode property, RegistroidASTTransformer transformer)
+    void process(AnnotationNode registroidAnnotation, ClassNode targetClass, PropertyNode property, RegistroidASTTransformer transformer, String modId)
 
     /**
      * The types this addon can process. (e.g. {@linkplain net.minecraft.world.item.Item Item}, {@linkplain net.minecraft.world.level.block.Block block})

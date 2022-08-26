@@ -25,7 +25,6 @@ import org.codehaus.groovy.transform.TransformWithPriority
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 
-import java.lang.reflect.Modifier
 import java.util.function.Predicate
 import java.util.function.Supplier
 
@@ -105,23 +104,39 @@ final class RegistroidASTTransformer extends AbstractASTTransformation implement
             final declaringClass = (it.getObjectExpression() as ClassExpression).type
             final property = (it.property as ConstantExpression).value as String
             final registryField = declaringClass.getField(property)
-            final dr = generateDR(targetClass, registryField, modId)
+            final dr = generateDR(targetClass, registryField, modId, false)
             final drGenericType = dr.type.genericsTypes[0].type
-            if (!drFields.any { it.type == drGenericType } && !existingDRs.contains(drGenericType))
+            if (!drFields.any { it.type.genericsTypes[0].type == drGenericType || it.name == dr.name } && !existingDRs.contains(drGenericType)) {
                 drFields.push(dr)
+                targetClass.addField(dr)
+            }
+        }
+
+        final Map<ClassNode, String> drToModId = [:]
+        drFields.each {
+            if (it.initialValueExpression instanceof MethodCallExpression && it.initialValueExpression.type == DEFERRED_REGISTER_TYPE) {
+                final args = (it.initialValueExpression as MethodCallExpression).arguments
+                if (args instanceof ArgumentListExpression && args.size() == 2 && args.getExpression(0) instanceof ConstantExpression) {
+                    final val = (args.getExpression(0) as ConstantExpression).value
+                    if (val instanceof String) {
+                        drToModId[it.type.genericsTypes[0].type] = val
+                    }
+                }
+            }
         }
 
         List.copyOf(targetClass.properties).each { PropertyNode prop ->
             addons.each {
-                if (it.supportedTypes.any { TransformUtils.isSubclass(prop.type, it) }) {
-                    it.process(annotationNode, targetClass, prop, this)
+                final found = it.supportedTypes.find { TransformUtils.isSubclass(prop.type, it) }
+                if (found !== null) {
+                    it.process(annotationNode, targetClass, prop, this, recursivelyFind(found, drToModId))
                 }
             }
         }
 
         if (getMemberValue(annotationNode, 'includeInnerClasses')) {
             targetClass.innerClasses.each {
-                registerInnerAddons(annotationNode, targetClass, it, addons)
+                registerInnerAddons(annotationNode, targetClass, it, drToModId, addons)
             }
         }
 
@@ -132,15 +147,17 @@ final class RegistroidASTTransformer extends AbstractASTTransformation implement
         }
     }
 
-    private void registerInnerAddons(final AnnotationNode annotationNode, final ClassNode targetClass, final InnerClassNode innerClass, final List<RegistroidAddon> addons) {
+    private void registerInnerAddons(final AnnotationNode annotationNode, final ClassNode targetClass, final InnerClassNode innerClass,
+                                     final Map<ClassNode, String> drToModIds, final List<RegistroidAddon> addons) {
         List.copyOf(innerClass.properties).each { PropertyNode prop ->
             addons.each {
-                if (it.supportedTypes.any { TransformUtils.isSubclass(prop.type, it) }) {
-                    it.process(annotationNode, targetClass, prop, this)
+                final found = it.supportedTypes.find { TransformUtils.isSubclass(prop.type, it) }
+                if (found !== null) {
+                    it.process(annotationNode, targetClass, prop, this, recursivelyFind(found, drToModIds))
                 }
             }
         }
-        innerClass.innerClasses.each { registerInnerAddons(annotationNode, targetClass, it, addons) }
+        innerClass.innerClasses.each { registerInnerAddons(annotationNode, targetClass, it, drToModIds, addons) }
     }
 
     private boolean hasDuplicates(List<FieldNode> fields, ClassNode targetClass) {
@@ -157,65 +174,74 @@ final class RegistroidASTTransformer extends AbstractASTTransformation implement
         return false
     }
 
-    private FieldNode generateDR(final ClassNode targetClass, final FieldNode registryField, final String modId) {
+    private FieldNode generateDR(final ClassNode targetClass, final FieldNode registryField, final String modId, boolean addToClass = true) {
         if (registryField.type == RESOURCE_KEY_TYPE) {
-            makeResourceKey(targetClass, registryField, modId)
+            makeResourceKey(targetClass, registryField, modId, addToClass)
         } else if (registryField.type.isDerivedFrom(REGISTRY_TYPE)) {
-            makeRegistry(targetClass, registryField, modId)
+            makeRegistry(targetClass, registryField, modId, addToClass)
         } else if (GeneralUtils.isOrImplements(registryField.type, FORGE_REGISTRY_TYPE)) {
-            makeForgeRegistry(targetClass, registryField, modId)
+            makeForgeRegistry(targetClass, registryField, modId, addToClass)
         } else {
             addError("No known way of representing registry from ${registryField.owner.name}.${registryField.name}", registryField)
             return null
         }
     }
 
-    private static FieldNode makeResourceKey(final ClassNode targetClass, final FieldNode registryField, final String modId) {
+    private static FieldNode makeResourceKey(final ClassNode targetClass, final FieldNode registryField, final String modId, boolean addToClass = true) {
         // ResourceKey<Registry<T>>
         final type = registryField.type.genericsTypes[0].type.genericsTypes[0].type
-        return TransformUtils.addField(
-                fieldName: registryField.name.replace('_REGISTRY', 'S').toUpperCase(Locale.ROOT),
-                targetClassNode: targetClass,
-                type: GenericsUtils.makeClassSafeWithGenerics(DeferredRegister, type),
-                modifiers: Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,
-                initialValue: GeneralUtils.callX(
+        final field = new FieldNode(
+                registryField.name.replace('_REGISTRY', 'S').toUpperCase(Locale.ROOT),
+                Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,
+                GenericsUtils.makeClassSafeWithGenerics(DeferredRegister, type), targetClass,
+                GeneralUtils.callX(
                         DEFERRED_REGISTER_TYPE, 'create', GeneralUtils.args(
                         GeneralUtils.fieldX(registryField), GeneralUtils.constX(modId)
                     )
                 )
         )
+        if (addToClass) {
+            targetClass.addField(field)
+        }
+        return field
     }
 
-    private static FieldNode makeForgeRegistry(final ClassNode targetClass, final FieldNode registryField, final String modId) {
+    private static FieldNode makeForgeRegistry(final ClassNode targetClass, final FieldNode registryField, final String modId, boolean addToClass = true) {
         // ForgeRegistry<T>
         final type = registryField.type.genericsTypes[0].type
-        return TransformUtils.addField(
-                fieldName: registryField.name.toUpperCase(Locale.ROOT),
-                targetClassNode: targetClass,
-                type: GenericsUtils.makeClassSafeWithGenerics(DeferredRegister, type),
-                modifiers: Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,
-                initialValue: GeneralUtils.callX(
-                        DEFERRED_REGISTER_TYPE, 'create', GeneralUtils.args(
-                        GeneralUtils.fieldX(registryField), GeneralUtils.constX(modId)
-                    )
+        final field = new FieldNode(
+                registryField.name.toUpperCase(Locale.ROOT),
+                Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,
+                GenericsUtils.makeClassSafeWithGenerics(DeferredRegister, type),
+                targetClass, GeneralUtils.callX(
+                DEFERRED_REGISTER_TYPE, 'create', GeneralUtils.args(
+                    GeneralUtils.fieldX(registryField), GeneralUtils.constX(modId)
                 )
+            )
         )
+        if (addToClass) {
+            targetClass.addField(field)
+        }
+        return field
     }
 
-    private static FieldNode makeRegistry(final ClassNode targetClass, final FieldNode registryField, final String modId) {
+    private static FieldNode makeRegistry(final ClassNode targetClass, final FieldNode registryField, final String modId, boolean addToClass = true) {
         // Registry<T>
         final type = registryField.type.genericsTypes[0].type
-        return TransformUtils.addField(
-                fieldName: (registryField.name + 'S').toUpperCase(Locale.ROOT),
-                targetClassNode: targetClass,
-                type: GenericsUtils.makeClassSafeWithGenerics(DeferredRegister, type),
-                modifiers: Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,
-                initialValue: GeneralUtils.callX(
+        final field = new FieldNode(
+                (registryField.name + 'S').toUpperCase(Locale.ROOT),
+                Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL,
+                GenericsUtils.makeClassSafeWithGenerics(DeferredRegister, type), targetClass,
+                GeneralUtils.callX(
                         DEFERRED_REGISTER_TYPE, 'create', GeneralUtils.args(
                         GeneralUtils.callX(GeneralUtils.fieldX(registryField), 'key'), GeneralUtils.constX(modId)
                     )
                 )
         )
+        if (addToClass) {
+            targetClass.addField(field)
+        }
+        return field
     }
 
     private void transformField(AnnotationNode annotation, ClassNode targetClass, FieldNode targetField) {
@@ -340,6 +366,18 @@ final class RegistroidASTTransformer extends AbstractASTTransformation implement
 
     private static String getInternalName(ClassNode classNode) {
         return classNode.name.replace('.' as char, '/' as char)
+    }
+
+    private static String recursivelyFind(final ClassNode type, final Map<ClassNode, String> map) {
+        String val = map[type]
+        if (val) return val
+        if (type.superClass !== null && (val = recursivelyFind(type.superClass, map)) !== null) {
+            return val
+        }
+        for (final iface : type.interfaces) {
+            if ((val = recursivelyFind(iface, map)) !== null) return val
+        }
+        return null
     }
 
     @Override
