@@ -23,7 +23,7 @@ class Configs {
         static List<String> stuff = ['12']
     }
 
-//    @Config
+    @Config
     static class GroupOnlyTest {
         static class Group {
             static boolean enable = true
@@ -33,7 +33,7 @@ class Configs {
         }
     }
 
-//    @Config
+    @Config
     static class RangeTest {
         /**
          * Ranged short test
@@ -48,7 +48,7 @@ class Configs {
         static int rangedInt = 130
     }
 
-    // @Config(value = ModConfig.Type.CLIENT)
+    @Config
     static class Common {
         // These are optional:
         static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()

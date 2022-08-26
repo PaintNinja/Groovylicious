@@ -537,7 +537,6 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         }
     }
 
-    // todo: look into improving this
     static Expression getPropertyValueOrDefault(PropertyNode property) {
         final noInitial = property.field.initialValueExpression === null
         if (noInitial) {
