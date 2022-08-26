@@ -114,10 +114,10 @@ final class RegistroidASTTransformer extends AbstractASTTransformation implement
 
         final Map<ClassNode, String> drToModId = [:]
         drFields.each {
-            if (it.initialValueExpression instanceof MethodCallExpression && it.initialValueExpression.type == DEFERRED_REGISTER_TYPE) {
-                final args = (it.initialValueExpression as MethodCallExpression).arguments
-                if (args instanceof ArgumentListExpression && args.size() == 2 && args.getExpression(0) instanceof ConstantExpression) {
-                    final val = (args.getExpression(0) as ConstantExpression).value
+            if (it.initialValueExpression instanceof StaticMethodCallExpression) {
+                final args = (it.initialValueExpression as StaticMethodCallExpression).arguments
+                if (args instanceof ArgumentListExpression && args.size() == 2 && args.getExpression(1) instanceof ConstantExpression) {
+                    final val = (args.getExpression(1) as ConstantExpression).value
                     if (val instanceof String) {
                         drToModId[it.type.genericsTypes[0].type] = val
                     }
