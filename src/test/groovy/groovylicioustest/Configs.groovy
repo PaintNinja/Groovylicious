@@ -48,7 +48,7 @@ class Configs {
     static class Common {
         // These are optional:
         static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()
-//        static ForgeConfigSpec mySpec
+        static ForgeConfigSpec mySpec
 
         /** How fast do you need to drive to accomplish time travel? {@range 50..100} */
         @Exclude
