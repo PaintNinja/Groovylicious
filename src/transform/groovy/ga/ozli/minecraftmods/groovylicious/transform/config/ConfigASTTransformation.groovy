@@ -5,6 +5,7 @@ import com.google.common.base.Suppliers
 import com.matyrobbrt.gml.GMod
 import com.matyrobbrt.gml.transform.api.ModRegistry
 import com.matyrobbrt.gml.transform.gmods.GModASTTransformer
+import ga.ozli.minecraftmods.groovylicious.transform.PojoTransformUtils
 import ga.ozli.minecraftmods.groovylicious.transform.TransformUtils
 import groovy.transform.CompileStatic
 import groovy.transform.Memoized
@@ -31,18 +32,13 @@ import static org.objectweb.asm.Opcodes.*
 @GroovyASTTransformation(phase = CompilePhase.CANONICALIZATION)
 class ConfigASTTransformation extends AbstractASTTransformation {
 
-    // todo: caching of float/short/byte casts(?)
-
     private static final boolean DEBUG = false
 
     private static final ClassNode CONFIG_BUILDER_TYPE = ClassHelper.make(ForgeConfigSpec.Builder)
-    private static final ClassNode CONFIG_VALUE_TYPE = ClassHelper.make(ConfigValue)
-    private static final ClassNode GROUP_TYPE = ClassHelper.make(ConfigGroup)
     private static final ClassNode LIST_TYPE = ClassHelper.make(List)
     private static final ClassNode SUPPLIERS_TYPE = ClassHelper.make(Suppliers)
     private static final ClassNode PREDICATES_TYPE = ClassHelper.make(Predicates)
     private static final ClassNode CONFIG_SPEC_TYPE = ClassHelper.make(ForgeConfigSpec)
-    private static final ClassNode MOD_TYPE = ClassHelper.make(GMod)
 
     ModConfig.Type configType
     String modId
@@ -86,7 +82,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
             hasExplicitRootInitMethod = false
             rootInitMethod = TransformUtils.addStaticMethod(
                     targetClassNode: configDataClass,
-                    methodName: 'init',
+                    methodName: 'init'
             )
 
             // If we needed to generate our own init method, we'll probably need to handle calling it ourselves too...
@@ -96,7 +92,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
             if (!configDataClass.outerClasses.empty) {
                 configDataClass.outerClasses.each { outerClass ->
                     if (DEBUG) println SV(outerClass)
-                    final boolean isModMainClass = outerClass.annotations*.classNode.find { it == MOD_TYPE }
+                    final boolean isModMainClass = outerClass.annotations*.classNode.find { it == TransformUtils.MOD_TYPE }
 
                     // We found an outer class annotated with @GMod, so we know that this configDataClass is inside
                     // the Mod's main class and can add a static { configDataClass.init() } to it
@@ -130,17 +126,16 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         // loop through all the properties in the configDataClass and setup the relevant config initializers, getters and setters
         configDataClass.properties.each { property ->
             if (DEBUG) println "\n${configDataClass.name}.${SV(property.name)}"
-            final boolean excludeFieldsWithoutAnnotation = getMemberValue(configAnnotation, 'excludeFieldsWithoutAnnotation')
-            generateConfigValue(configDataClass, property, excludeFieldsWithoutAnnotation)
+            if (!TransformUtils.shouldExclude(property)) {
+                generateConfigValue(configDataClass, property)
+            }
         }
 
         // Inner static dataclasses in a configDataClass are considered config groups
-        final boolean excludeGroupsWithoutAnnotation = getMemberValue(configAnnotation, 'excludeGroupsWithoutAnnotation')
         configDataClass.innerClasses.each { configGroup ->
-            final nestedAnn = configGroup.annotations.find { it.classNode == GROUP_TYPE }
-            if (nestedAnn === null && excludeGroupsWithoutAnnotation) return
-            if (nestedAnn !== null && getMemberValue(nestedAnn, 'exclude')) return
-            generateConfigGroup(configGroup, configDataClass)
+            if (!TransformUtils.shouldExclude(configGroup)) {
+                generateConfigGroup(configGroup, configDataClass)
+            }
         }
 
         // If there's an explicitly defined ForgeConfigSpec field, let's use it
@@ -254,11 +249,8 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         )
     }
 
-    void generateConfigValue(ClassNode targetClassNode, PropertyNode property, boolean excludeFieldsWithoutAnnotation) {
+    void generateConfigValue(ClassNode targetClassNode, PropertyNode property) {
         if (property.type == CONFIG_BUILDER_TYPE || property.type == CONFIG_SPEC_TYPE) return // don't generate config values for the ForgeConfigSpec.Builder
-        final annotation = property.annotations.find { it.classNode == CONFIG_VALUE_TYPE }
-        if (annotation !== null && getMemberStringValue(annotation, 'exclude')) return
-        if (annotation === null && excludeFieldsWithoutAnnotation) return
 
         // make the property private static final to force Groovy to use the get() and set() methods
         property.modifiers = TransformUtils.CONSTANT_MODIFIERS
@@ -297,11 +289,11 @@ class ConfigASTTransformation extends AbstractASTTransformation {
             propertyType = GenericsUtils.makeClassSafeWithGenerics(LIST_TYPE, new GenericsType(gType))
         }
 
-        ClosureExpression predicate = (ClosureExpression) annotation?.members?.get('validator')
-        if (predicate !== null && !configValueType.supportsValidator()) {
-            addError("Config of type $configValueType does not support validators!", property)
-            return
-        }
+//        ClosureExpression predicate = (ClosureExpression) annotation?.members?.get('validator')
+//        if (predicate !== null && !configValueType.supportsValidator()) {
+//            addError("Config of type $configValueType does not support validators!", property)
+//            return
+//        }
 
         if (DEBUG) {
             println SV(configValueType)
@@ -394,39 +386,38 @@ class ConfigASTTransformation extends AbstractASTTransformation {
             }
         }
 
-        final propertyName = Optional.ofNullable(annotation)
-            .map { getMemberStringValue(it, 'name') }
-            .filter { it !== null }
-            .orElse(property.name)
-        final configFieldType = Type.getObjectType(TransformUtils.getInternalName(configValueType.classNode))
-        final configFieldDesc = configFieldType.descriptor
         // make the appropriate underlying config value field
         // Assuming property.name == 'test' and property.type == int in this example:
         // @Generated
         // static ForgeConfigSpec.IntValue $configValueForTest = $configBuilder.defineInRange("test", 0, Integer.MIN_VALUE, Integer.MAX_VALUE)
-        final builder = hasComments ? getConfigBuilderWithComments(configCommentExprs) : configBuilderVariable
+        final configBuilder = hasComments ? getConfigBuilderWithComments(configCommentExprs) : configBuilderVariable
         TransformUtils.addField(
                 targetClassNode: targetClassNode,
                 fieldName: "\$configValueFor${capitalizedPropertyName}",
                 modifiers: ACC_PRIVATE | ACC_STATIC | ACC_FINAL,
                 type: configValueType.classNode,
-                initialValue: isList ?
+                initialValue: { ->
+                    if (isList) {
                         GeneralUtils.callX(
-                                builder, 'defineListAllowEmpty',
+                                configBuilder, 'defineListAllowEmpty',
                                 TransformUtils.conditionalArgs(
-                                GeneralUtils.callX(LIST_TYPE, 'of', GeneralUtils.constX(propertyName)),
-                                GeneralUtils.callX(SUPPLIERS_TYPE, 'ofInstance', getPropertyValueOrDefault(property)),
-                                predicate ?: GeneralUtils.callX(PREDICATES_TYPE, 'alwaysTrue')
-                            )) : GeneralUtils.callX(
-                            builder, isBounded ? 'defineInRange' : 'define',
-                            TransformUtils.conditionalArgs(
-                                    GeneralUtils.constX(propertyName),
-                                    getPropertyValueOrDefault(property),
-                                    isBounded ? minValueBound : null,
-                                    isBounded ? maxValueBound : null,
-                                    predicate
-                            )
-                )
+                                        GeneralUtils.callX(LIST_TYPE, 'of', GeneralUtils.constX(property.name)),
+                                        GeneralUtils.callX(SUPPLIERS_TYPE, 'ofInstance', getPropertyValueOrDefault(property)),
+                                        /*predicate ?: */ GeneralUtils.callX(PREDICATES_TYPE, 'alwaysTrue')
+                                ))
+                    } else {
+                        GeneralUtils.callX(
+                                configBuilder, isBounded ? 'defineInRange' : 'define',
+                                TransformUtils.conditionalArgs(
+                                        GeneralUtils.constX(property.name),
+                                        getPropertyValueOrDefault(property),
+                                        isBounded ? minValueBound : null,
+                                        isBounded ? maxValueBound : null,
+                                        //predicate
+                                )
+                        )
+                    }
+                } as Closure<Expression>
         )
 
         // make the appropriate getter method
@@ -435,19 +426,20 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         // public static int getTest() {
         //     return $configValueForTest.get();
         // }
+        final configFieldType = Type.getObjectType(PojoTransformUtils.getInternalName(configValueType.classNode))
+        final String configFieldDesc = configFieldType.descriptor
         final bytecode = { MethodVisitor it ->
             it.visitCode()
-            it.visitFieldInsn(GETSTATIC, TransformUtils.getInternalName(targetClassNode), "\$configValueFor${capitalizedPropertyName}", configFieldDesc)
+            it.visitFieldInsn(GETSTATIC, PojoTransformUtils.getInternalName(targetClassNode), "\$configValueFor${capitalizedPropertyName}", configFieldDesc)
             it.visitMethodInsn(INVOKEVIRTUAL, configFieldType.internalName, 'get', '()Ljava/lang/Object;', false)
         }
-        final getterCode = TransformUtils.cast(propertyType, bytecode)
+        final getterCode = PojoTransformUtils.cast(propertyType, bytecode)
         TransformUtils.addStaticMethod(
                 targetClassNode: targetClassNode,
                 methodName: "get${capitalizedPropertyName}",
                 returnType: propertyType,
                 code: getterCode
         )
-
 
         // make the appropriate setter method
         // Assuming property.name == 'test' and propertyType == int in this example:
@@ -456,14 +448,14 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         //     $configValueForTest.set(newValue);
         // }
         final setBlock = GeneralUtils.stmt(GeneralUtils.bytecodeX {
-            it.visitFieldInsn(GETSTATIC, TransformUtils.getInternalName(targetClassNode), "\$configValueFor${capitalizedPropertyName}", configFieldDesc)
-            final paramType = TransformUtils.getType(propertyType)
+            it.visitFieldInsn(GETSTATIC, PojoTransformUtils.getInternalName(targetClassNode), "\$configValueFor${capitalizedPropertyName}", configFieldDesc)
+            final paramType = PojoTransformUtils.getType(propertyType)
             it.visitVarInsn(paramType.getOpcode(ILOAD), 0)
             if (ClassHelper.isPrimitiveType(propertyType)) {
                 final boxed = ClassHelper.getWrapper(propertyType)
-                it.visitMethodInsn(INVOKESTATIC, TransformUtils.getInternalName(boxed), 'valueOf', Type.getMethodDescriptor(TransformUtils.getType(boxed), TransformUtils.getType(propertyType)), false)
+                it.visitMethodInsn(INVOKESTATIC, PojoTransformUtils.getInternalName(boxed), 'valueOf', Type.getMethodDescriptor(PojoTransformUtils.getType(boxed), PojoTransformUtils.getType(propertyType)), false)
             }
-            it.visitMethodInsn(INVOKEVIRTUAL, TransformUtils.getInternalName(configValueType.classNode), 'set', '(Ljava/lang/Object;)V', false)
+            it.visitMethodInsn(INVOKEVIRTUAL, PojoTransformUtils.getInternalName(configValueType.classNode), 'set', '(Ljava/lang/Object;)V', false)
             it.visitInsn(RETURN)
         })
         TransformUtils.addStaticMethod(
@@ -484,12 +476,6 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         groupClass.methods.find { method ->
             method.returnType == ClassHelper.VOID_TYPE && method.name == 'init' && method.isStatic()
         } ?: TransformUtils.addStaticMethod(targetClassNode: groupClass, methodName: 'init')
-        final annotation = groupClass.annotations.find { it.classNode == GROUP_TYPE }
-
-        final groupName = Optional.ofNullable(annotation)
-            .map { getMemberStringValue(it, 'name') }
-            .filter { it !== null}
-            .orElse(groupClass.nameWithoutPackage.split(/\$/).last())
 
         /*
          * @Config
@@ -510,7 +496,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                 GeneralUtils.stmt(GeneralUtils.callX(
                         configBuilderVariable,
                         'push',
-                        GeneralUtils.args(GeneralUtils.constX(groupName))
+                        GeneralUtils.args(GeneralUtils.constX(groupClass.nameWithoutPackage.split(/\$/).last()))
                 )),
 
                 // groupClass.init()
@@ -522,24 +508,18 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                 GeneralUtils.stmt(GeneralUtils.callX(configBuilderVariable, 'pop'))
         ], false)
 
-        final boolean excludeFieldsWithoutAnnotation = annotation !== null && getMemberValue(annotation, 'excludeFieldsWithoutAnnotation')
-        final boolean excludeGroupsWithoutAnnotation = annotation !== null && getMemberValue(annotation, 'excludeGroupsWithoutAnnotation')
         groupClass.properties.each { property ->
             if (DEBUG) println "\n${groupClass.nameWithoutPackage.split(/\$/).last()}.${property.name}"
-            generateConfigValue(groupClass, property, excludeFieldsWithoutAnnotation)
+            generateConfigValue(groupClass, property)
         }
 
         groupClass.innerClasses.each { nestedConfigGroup ->
-            final nestedAnn = nestedConfigGroup.annotations.find { it.classNode == GROUP_TYPE }
-            if (nestedAnn === null && excludeGroupsWithoutAnnotation) return
-            if (nestedAnn !== null && getMemberValue(nestedAnn, 'exclude')) return
             generateConfigGroup(nestedConfigGroup, groupClass)
         }
     }
 
     static Expression getPropertyValueOrDefault(PropertyNode property) {
-        final noInitial = property.field.initialValueExpression === null
-        if (noInitial) {
+        if (property.field.initialValueExpression === null) {
             if (property.type == ClassHelper.STRING_TYPE || property.type == ClassHelper.GSTRING_TYPE) {
                 return ConstantExpression.EMPTY_STRING
             } else if (property.type == LIST_TYPE) {

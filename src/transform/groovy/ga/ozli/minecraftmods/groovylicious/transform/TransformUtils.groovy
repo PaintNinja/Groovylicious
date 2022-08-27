@@ -1,27 +1,29 @@
 package ga.ozli.minecraftmods.groovylicious.transform
 
-
+import com.matyrobbrt.gml.GMod
 import groovy.transform.CompileStatic
 import groovy.transform.Generated
 import groovy.transform.NamedParam
 import groovy.transform.NamedVariant
-import groovy.transform.stc.ClosureParams
-import groovy.transform.stc.SimpleType
 import org.codehaus.groovy.ast.*
 import org.codehaus.groovy.ast.expr.ArgumentListExpression
 import org.codehaus.groovy.ast.expr.CastExpression
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.codehaus.groovy.ast.stmt.Statement
-import org.codehaus.groovy.ast.tools.GeneralUtils
-import org.objectweb.asm.Type
 
 import javax.annotation.Nullable
 
-import static org.objectweb.asm.Opcodes.*
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE
+import static org.objectweb.asm.Opcodes.ACC_STATIC
+import static org.objectweb.asm.Opcodes.ACC_FINAL
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC
 
 @CompileStatic
 class TransformUtils {
+    static final ClassNode MOD_TYPE = ClassHelper.make(GMod)
+    static final ClassNode EXCLUDE_TYPE = ClassHelper.make(Exclude)
+
     static final AnnotationNode GENERATED_ANNOTATION = new AnnotationNode(ClassHelper.make(Generated))
 
     static final int CONSTANT_MODIFIERS = ACC_PRIVATE | ACC_STATIC | ACC_FINAL
@@ -111,6 +113,10 @@ class TransformUtils {
         }
     }
 
+    /**
+     * Builds an ArgumentListExpression with the given expressions, excluding any that are null.
+     * @see TransformUtils#conditionalArgs(List)
+     */
     static ArgumentListExpression conditionalArgs(@Nullable final /** <Closure<Expression> | Expression> */ Object... expressions) {
         final List<Expression> list = new ArrayList<>(expressions.length)
         for (Object expression : expressions) {
@@ -124,6 +130,10 @@ class TransformUtils {
         return new ArgumentListExpression(list)
     }
 
+    /**
+     * Builds an ArgumentListExpression with the given list of expressions, excluding any that are null.
+     * @see TransformUtils#conditionalArgs(Object...)
+     */
     static ArgumentListExpression conditionalArgs(final List<Expression> nullableExpressions) {
         final List<Expression> list = new ArrayList<>(nullableExpressions.size())
         for (final Expression expression : nullableExpressions) {
@@ -137,74 +147,18 @@ class TransformUtils {
         else return new CastExpression(nullableType, expression)
     }
 
-    static String getInternalName(ClassNode classNode) {
-        return classNode.name.replace('.' as char, '/' as char)
+    /**
+     * Whether or not a given FieldNode/PropertyNode is annotated with the specified annotation classNode.
+     * @param annotationClassNode The classNode of the annotation to check for.
+     * @param field The field/property to check for annotations.
+     * @return true if annotated, false if not.
+     */
+    static boolean isAnnotatedWith(@Nullable final ClassNode annotationClassNode, final AnnotatedNode field) {
+        if (annotationClassNode === null) return false
+        else return field.annotations*.classNode.find { it == annotationClassNode }
     }
 
-    public static final Set<PrimitiveType> DIRECT_PRIMITIVE_CAST = new HashSet<>()
-    static {
-        DIRECT_PRIMITIVE_CAST.add(new PrimitiveType(ClassHelper.int_TYPE, ClassHelper.Integer_TYPE, 'intValue'))
-        DIRECT_PRIMITIVE_CAST.add(new PrimitiveType(ClassHelper.boolean_TYPE, ClassHelper.Boolean_TYPE, 'booleanValue'))
-        DIRECT_PRIMITIVE_CAST.add(new PrimitiveType(ClassHelper.double_TYPE, ClassHelper.Double_TYPE, 'doubleValue'))
-    }
-
-    public static final ClassNode LIST = ClassHelper.make(List)
-
-    static Statement cast(ClassNode target, @ClosureParams(value = SimpleType, options = 'groovyjarjarasm.asm.MethodVisitor') Closure closure) {
-        if (target == LIST) {
-            return GeneralUtils.stmt(GeneralUtils.bytecodeX(target) {
-                closure(it)
-                it.visitTypeInsn(CHECKCAST, Type.getInternalName(List))
-            })
-        }
-        for (final entry : DIRECT_PRIMITIVE_CAST) {
-            if (entry.matches(target)) return entry.cast(target, closure)
-        }
-        GeneralUtils.stmt(GeneralUtils.castX(target, GeneralUtils.bytecodeX(closure)))
-    }
-
-    static Type getType(ClassNode classNode) {
-        return switch (classNode) {
-            case ClassHelper.int_TYPE -> Type.INT_TYPE
-            case ClassHelper.boolean_TYPE -> Type.BOOLEAN_TYPE
-            case ClassHelper.double_TYPE -> Type.DOUBLE_TYPE
-            case ClassHelper.float_TYPE -> Type.FLOAT_TYPE
-            case ClassHelper.short_TYPE -> Type.SHORT_TYPE
-            case ClassHelper.char_TYPE -> Type.CHAR_TYPE
-            case ClassHelper.long_TYPE -> Type.LONG_TYPE
-            case ClassHelper.byte_TYPE -> Type.BYTE_TYPE
-            default -> Type.getObjectType(getInternalName(classNode))
-        }
-    }
-
-    static class PrimitiveType {
-        ClassNode primitive, boxed
-        String conversionMethod, primitiveDesc
-
-        PrimitiveType(ClassNode primitive, ClassNode boxed, String conversionMethod) {
-            this.primitive = primitive
-            this.boxed = boxed
-            this.conversionMethod = conversionMethod
-            this.primitiveDesc = getType(primitive).getDescriptor()
-        }
-
-        boolean matches(ClassNode type) {
-            return primitive == type || boxed == type
-        }
-
-        Statement cast(ClassNode target, Closure closure) {
-            if (target == primitive) {
-                return GeneralUtils.stmt(GeneralUtils.bytecodeX(primitive) {
-                    closure(it)
-                    final boxedInternal = getInternalName(boxed)
-                    it.visitTypeInsn(CHECKCAST, boxedInternal)
-                    it.visitMethodInsn(INVOKEVIRTUAL, boxedInternal, conversionMethod, '()' + primitiveDesc, false)
-                })
-            }
-            return GeneralUtils.stmt(GeneralUtils.bytecodeX(boxed) {
-                closure(it)
-                it.visitTypeInsn(CHECKCAST, getInternalName(boxed))
-            })
-        }
+    static boolean shouldExclude(final AnnotatedNode field) {
+        return isAnnotatedWith(EXCLUDE_TYPE, field)
     }
 }

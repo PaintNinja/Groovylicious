@@ -1,8 +1,7 @@
 package groovylicioustest
 
 import ga.ozli.minecraftmods.groovylicious.transform.Config
-import ga.ozli.minecraftmods.groovylicious.transform.config.ConfigGroup
-import ga.ozli.minecraftmods.groovylicious.transform.config.ConfigValue
+import ga.ozli.minecraftmods.groovylicious.transform.Exclude
 import groovy.transform.CompileStatic
 import groovy.transform.stc.POJO
 import net.minecraftforge.common.ForgeConfigSpec
@@ -23,17 +22,14 @@ class Configs {
         static List<String> stuff = ['12']
     }
 
-    @Config
+//    @Config
     static class GroupOnlyTest {
         static class Group {
             static boolean enable = true
         }
-        static class OtherOne {
-            static int yes = 12
-        }
     }
 
-    @Config
+//    @Config
     static class RangeTest {
         /**
          * Ranged short test
@@ -52,35 +48,35 @@ class Configs {
     static class Common {
         // These are optional:
         static ForgeConfigSpec.Builder myBuilder = new ForgeConfigSpec.Builder()
-        static ForgeConfigSpec mySpec
+//        static ForgeConfigSpec mySpec
 
         /** How fast do you need to drive to accomplish time travel? {@range 50..100} */
-        @ConfigValue(exclude = true)
+        @Exclude
         static byte timeTravelMph = 88
 
         /**
          * Fox rotation speed in RPM<br>
          * 100 is slow, 9999 is fast
          */
-        @ConfigValue(name = 'shush')
+//        @ConfigValue(name = 'shush')
         static float foxRotation = 9000.42f
 
-        @ConfigValue(name = 'testList')
+//        @ConfigValue(name = 'testList')
         static List<String> myValues
 
         // config groups are supported - simply add inner static classes
-        @ConfigGroup(name = 'hi', excludeFieldsWithoutAnnotation = true)
+        @Exclude
         static class LifeOfBrian {
             /** How far are you willing to walk to see the messiah? (in blocks) */
             static long willingToWalkDistance = 2000L
 
             /** The holy words of the messiah's mother */
-            @ConfigValue(name = 'customName', validator = { String it ->
-                if (it === null) return true
-                final isValid = it.contains('he')
-                if (!isValid) throw new RuntimeException()
-                return isValid
-            })
+//            @ConfigValue(name = 'customName', validator = { String it ->
+//                if (it === null) return true
+//                final isValid = it.contains('he')
+//                if (!isValid) throw new RuntimeException()
+//                return isValid
+//            })
             static String quote = "He's not the messiah, he's a very naughty boy!"
 
             // optional
@@ -88,7 +84,6 @@ class Configs {
 
             }*/
 
-            @CompileStatic
             static class Nested {
                 static boolean nestedConfigsSupport = true
 
