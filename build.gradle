@@ -116,16 +116,16 @@ repositories {
 
 dependencies {
     // Forge
-    minecraft 'net.minecraftforge:forge:1.19.2-43.0.11'
+    minecraft 'net.minecraftforge:forge:1.19.2-43.1.3'
 
     // Matyrobbrt's GroovyModLoader
-    compileOnly 'com.matyrobbrt.gml:gml:1.0.0'
-    runtimeOnly('com.matyrobbrt.gml:gml:1.0.0:all') {
+    compileOnly 'com.matyrobbrt.gml:gml:1.1.1'
+    runtimeOnly('com.matyrobbrt.gml:gml:1.1.1:all') {
         exclude module: 'transform'
     }
 
-    transformCompileOnly 'com.matyrobbrt.gml:gml:1.0.0'
-    transformCompileOnly 'com.matyrobbrt.gml:transform:1.0.0'
+    transformCompileOnly 'com.matyrobbrt.gml:gml:1.1.1'
+    transformCompileOnly 'com.matyrobbrt.gml:transform:1.1.1'
 
     // Ksyxis in dev env - speeds up initial server load times by lazy loading spawn chunks at
     // the cost of lag on the server when someone joins from previously empty - fine for me as
