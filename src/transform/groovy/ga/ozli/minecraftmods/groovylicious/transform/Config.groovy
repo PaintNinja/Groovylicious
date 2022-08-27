@@ -14,6 +14,20 @@ import java.lang.annotation.Target
 @Target(ElementType.TYPE)
 @GroovyASTTransformationClass('ga.ozli.minecraftmods.groovylicious.transform.config.ConfigASTTransformation')
 @interface Config {
+    /**
+     * The type of the config.
+     */
     ModConfig.Type value() default ModConfig.Type.COMMON
+
     String modId() default '(autoDetected)'
+    /**
+     * If fields without the {@link ga.ozli.minecraftmods.groovylicious.transform.config.ConfigValue} annotation should be excluded from serialization.<br>
+     * Defaults to {@code false}.
+     */
+    boolean excludeFieldsWithoutAnnotation() default false
+    /**
+     * If sub-groups without the {@link ga.ozli.minecraftmods.groovylicious.transform.config.ConfigGroup} annotation should be excluded from serialization.<br>
+     * Defaults to {@code false}.
+     */
+    boolean excludeGroupsWithoutAnnotation() default false
 }
