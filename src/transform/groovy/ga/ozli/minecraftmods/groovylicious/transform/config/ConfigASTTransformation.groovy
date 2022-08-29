@@ -2,7 +2,6 @@ package ga.ozli.minecraftmods.groovylicious.transform.config
 
 import com.google.common.base.Predicates
 import com.google.common.base.Suppliers
-import com.matyrobbrt.gml.GMod
 import com.matyrobbrt.gml.transform.api.ModRegistry
 import com.matyrobbrt.gml.transform.gmods.GModASTTransformer
 import ga.ozli.minecraftmods.groovylicious.transform.PojoTransformUtils
@@ -15,7 +14,6 @@ import net.minecraftforge.fml.ModLoadingContext
 import net.minecraftforge.fml.config.ModConfig
 import org.codehaus.groovy.ast.*
 import org.codehaus.groovy.ast.expr.*
-import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.codehaus.groovy.ast.tools.GeneralUtils
 import org.codehaus.groovy.ast.tools.GenericsUtils
 import org.codehaus.groovy.control.CompilePhase
@@ -75,7 +73,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         // @Config dataclasses need an init() method for classloading itself and its inner classes (config groups)
         // Check if a compatible one already exists...
         final boolean hasExplicitRootInitMethod
-        MethodNode rootInitMethod = configDataClass.methods.find { method ->
+        @Nullable MethodNode rootInitMethod = configDataClass.methods.find { method ->
             method.returnType == ClassHelper.VOID_TYPE && method.isStatic() && method.name == 'init'
         }
         // ...if it doesn't, make one and add it to the configDataClass
@@ -159,8 +157,6 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                 initialValue: GeneralUtils.callX(configBuilderVariable, 'build')
         ).name
 
-        final VariableExpression configSpecVariable = new VariableExpression(configSpecFieldString, CONFIG_SPEC_TYPE)
-
         if (!hasExplicitRootInitMethod) {
             // static {
             //     ModLoadingContext.get().registerConfig(configType, $configSpec, modId)
@@ -178,7 +174,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                                                     new ClassExpression(ClassHelper.make(ModConfig.Type)),
                                                     configType.name()
                                             ),
-                                            configSpecVariable,
+                                            new VariableExpression(configSpecFieldString, CONFIG_SPEC_TYPE),
                                             GeneralUtils.constX(modId.toLowerCase() + '-' + configType.name().toLowerCase() + '.toml')
                                     )
                             )
@@ -195,8 +191,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                 return ModConfig.Type.valueOf((property as ConstantExpression).value as String)
             }
         } else {
-            String className = annotatedClass.nameWithoutPackage
-            className = className.split('$').last()
+            final String className = annotatedClass.nameWithoutPackage.split('$').last()
 
             if (className.contains 'Client') return ModConfig.Type.CLIENT
             else if (className.contains 'Server') return ModConfig.Type.SERVER
@@ -214,7 +209,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
     @Memoized
     VariableExpression getConfigBuilderVariable() {
         // First, let's check if a ForgeConfigSpec.Builder field has been explicitly declared and use it if so.
-        String configBuilderFieldName = configDataClass.fields.find {
+        @Nullable String configBuilderFieldName = configDataClass.fields.find {
             it.type == CONFIG_BUILDER_TYPE && it.isStatic()
         }?.name
 

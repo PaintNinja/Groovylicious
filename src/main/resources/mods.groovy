@@ -7,10 +7,9 @@ ModsDotGroovy.make {
 
     mod {
         modId = 'groovylicious'
-        displayName = 'Groovylicious'
-
         version = this.version
 
+        displayUrl = 'https://www.curseforge.com/minecraft/mc-mods/Groovylicious'
         description = 'Delicious syntax sugar with the power of Groovy!'
         authors = ['Paint_Ninja', 'Matyrobbrt']
 
