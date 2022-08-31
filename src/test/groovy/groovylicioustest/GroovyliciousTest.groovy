@@ -7,4 +7,6 @@ import groovy.transform.stc.POJO
 @POJO
 @CompileStatic
 @GMod('groovylicioustest')
-class GroovyliciousTest {}
+class GroovyliciousTest {
+    GroovyliciousTest() {}
+}

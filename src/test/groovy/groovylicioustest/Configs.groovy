@@ -1,9 +1,11 @@
 package groovylicioustest
 
 import ga.ozli.minecraftmods.groovylicious.transform.Config
+import ga.ozli.minecraftmods.groovylicious.transform.Exclude
 import groovy.transform.CompileStatic
 import groovy.transform.stc.POJO
 import net.minecraftforge.common.ForgeConfigSpec
+import net.minecraftforge.fml.config.ModConfig
 
 @POJO
 @CompileStatic
@@ -12,15 +14,18 @@ class Configs {
     @Config
     static class Client { // this is saved as groovylicious-client.toml because the class name contains "Client"
         static boolean enable = true
+        static Boolean enable2 = false
+
+        static int yes = 14
+        static Integer no = 200
+
+        static List<String> stuff = ['12']
     }
 
 //    @Config
     static class GroupOnlyTest {
         static class Group {
             static boolean enable = true
-        }
-        static class OtherOne {
-            static int yes = 12
         }
     }
 
@@ -46,20 +51,32 @@ class Configs {
         static ForgeConfigSpec mySpec
 
         /** How fast do you need to drive to accomplish time travel? {@range 50..100} */
+        @Exclude
         static byte timeTravelMph = 88
 
         /**
          * Fox rotation speed in RPM<br>
          * 100 is slow, 9999 is fast
          */
+//        @ConfigValue(name = 'shush')
         static float foxRotation = 9000.42f
 
+//        @ConfigValue(name = 'testList')
+        static List<String> myValues
+
         // config groups are supported - simply add inner static classes
+        @Exclude
         static class LifeOfBrian {
             /** How far are you willing to walk to see the messiah? (in blocks) */
             static long willingToWalkDistance = 2000L
 
             /** The holy words of the messiah's mother */
+//            @ConfigValue(name = 'customName', validator = { String it ->
+//                if (it === null) return true
+//                final isValid = it.contains('he')
+//                if (!isValid) throw new RuntimeException()
+//                return isValid
+//            })
             static String quote = "He's not the messiah, he's a very naughty boy!"
 
             // optional
@@ -67,7 +84,6 @@ class Configs {
 
             }*/
 
-            @CompileStatic
             static class Nested {
                 static boolean nestedConfigsSupport = true
 

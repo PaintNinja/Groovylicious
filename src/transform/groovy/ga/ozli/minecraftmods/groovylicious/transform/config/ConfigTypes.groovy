@@ -12,8 +12,35 @@ import org.codehaus.groovy.ast.tools.GenericsUtils
 @CompileStatic
 class ConfigTypes {
 
+    static ConfigValueType list(ClassNode type) {
+        return new List(type)
+    }
+
+    static final class List implements ConfigValueType {
+        final ClassNode classNode
+        List(ClassNode type) {
+            classNode = GenericsUtils.makeClassSafeWithGenerics(
+                    ClassHelper.makeCached(ForgeConfigSpec.ConfigValue), new GenericsType(
+                    GenericsUtils.makeClassSafeWithGenerics(java.util.List, type)
+                )
+            )
+        }
+        @Override
+        ClassNode getClassNode() {
+            return classNode
+        }
+
+        @Override
+        boolean supportsValidator() {
+            return true
+        }
+    }
+
     interface ConfigValueType {
         ClassNode getClassNode()
+        default boolean supportsValidator() {
+            return false
+        }
     }
 
     static ConfigValueType getConfigValueType(ClassNode primitiveType) {
@@ -140,7 +167,12 @@ class ConfigTypes {
                         ClassHelper.makeCached(ForgeConfigSpec.ConfigValue),
                         new GenericsType(ClassHelper.STRING_TYPE)
                 )
-        ),
+        ) {
+            @Override
+            boolean supportsValidator() {
+                return true
+            }
+        },
 
         /** {@code ForgeConfigSpec.ConfigValue<?>} */
         GENERIC_VALUE_TYPE(
@@ -148,7 +180,12 @@ class ConfigTypes {
                         ClassHelper.makeCached(ForgeConfigSpec.ConfigValue),
                         GenericsUtils.buildWildcardType()
                 )
-        )
+        ) {
+            @Override
+            boolean supportsValidator() {
+                return true
+            }
+        }
 
         final ClassNode classNode
         Unbounded(ClassNode classNode) {

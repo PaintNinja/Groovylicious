@@ -1,16 +1,11 @@
 package ga.ozli.minecraftmods.groovylicious.transform
 
+import com.matyrobbrt.gml.GMod
 import groovy.transform.CompileStatic
 import groovy.transform.Generated
 import groovy.transform.NamedParam
 import groovy.transform.NamedVariant
-import org.codehaus.groovy.ast.AnnotationNode
-import org.codehaus.groovy.ast.ClassHelper
-import org.codehaus.groovy.ast.ClassNode
-import org.codehaus.groovy.ast.ConstructorNode
-import org.codehaus.groovy.ast.FieldNode
-import org.codehaus.groovy.ast.MethodNode
-import org.codehaus.groovy.ast.Parameter
+import org.codehaus.groovy.ast.*
 import org.codehaus.groovy.ast.expr.ArgumentListExpression
 import org.codehaus.groovy.ast.expr.CastExpression
 import org.codehaus.groovy.ast.expr.ConstructorCallExpression
@@ -23,13 +18,16 @@ import org.objectweb.asm.Opcodes
 
 import javax.annotation.Nullable
 
-import static org.objectweb.asm.Opcodes.ACC_PUBLIC
-import static org.objectweb.asm.Opcodes.ACC_STATIC
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE
+import static org.objectweb.asm.Opcodes.ACC_STATIC
 import static org.objectweb.asm.Opcodes.ACC_FINAL
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC
 
 @CompileStatic
 class TransformUtils {
+    static final ClassNode MOD_TYPE = ClassHelper.make(GMod)
+    static final ClassNode EXCLUDE_TYPE = ClassHelper.make(Exclude)
+
     static final AnnotationNode GENERATED_ANNOTATION = new AnnotationNode(ClassHelper.make(Generated))
 
     static final int CONSTANT_MODIFIERS = ACC_PRIVATE | ACC_STATIC | ACC_FINAL
@@ -119,6 +117,10 @@ class TransformUtils {
         }
     }
 
+    /**
+     * Builds an ArgumentListExpression with the given expressions, excluding any that are null.
+     * @see TransformUtils#conditionalArgs(List)
+     */
     static ArgumentListExpression conditionalArgs(@Nullable final /** <Closure<Expression> | Expression> */ Object... expressions) {
         final List<Expression> list = new ArrayList<>(expressions.length)
         for (Object expression : expressions) {
@@ -132,6 +134,10 @@ class TransformUtils {
         return new ArgumentListExpression(list)
     }
 
+    /**
+     * Builds an ArgumentListExpression with the given list of expressions, excluding any that are null.
+     * @see TransformUtils#conditionalArgs(Object...)
+     */
     static ArgumentListExpression conditionalArgs(final List<Expression> nullableExpressions) {
         final List<Expression> list = new ArrayList<>(nullableExpressions.size())
         for (final Expression expression : nullableExpressions) {
@@ -161,5 +167,19 @@ class TransformUtils {
 
     static void addLastCtorStatement(final ClassNode classNode, final Statement statement) {
         (getOrCreatorCtor(classNode).code as BlockStatement).addStatement(statement)
+    }
+    /**
+     * Whether or not a given FieldNode/PropertyNode is annotated with the specified annotation classNode.
+     * @param annotationClassNode The classNode of the annotation to check for.
+     * @param field The field/property to check for annotations.
+     * @return true if annotated, false if not.
+     */
+    static boolean isAnnotatedWith(@Nullable final ClassNode annotationClassNode, final AnnotatedNode field) {
+        if (annotationClassNode === null) return false
+        else return field.annotations*.classNode.find { it == annotationClassNode }
+    }
+
+    static boolean shouldExclude(final AnnotatedNode field) {
+        return isAnnotatedWith(EXCLUDE_TYPE, field)
     }
 }
