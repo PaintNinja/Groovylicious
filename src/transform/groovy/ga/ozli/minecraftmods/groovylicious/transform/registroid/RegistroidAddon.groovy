@@ -1,10 +1,15 @@
 package ga.ozli.minecraftmods.groovylicious.transform.registroid
 
 import groovy.transform.CompileStatic
+import net.minecraft.core.Registry
 import org.codehaus.groovy.ast.AnnotationNode
+import org.codehaus.groovy.ast.ClassHelper
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.PropertyNode
 import org.codehaus.groovy.ast.expr.PropertyExpression
+import org.codehaus.groovy.ast.tools.GeneralUtils
+
+import java.util.function.Supplier
 
 /**
  * An addon for {@linkplain ga.ozli.minecraftmods.groovylicious.transform.Registroid Registroid} systems. <br>
@@ -20,10 +25,12 @@ import org.codehaus.groovy.ast.expr.PropertyExpression
  */
 @CompileStatic
 interface RegistroidAddon {
+    ClassNode REGISTRY_TYPE = ClassHelper.make(Registry)
+
     /**
      * Processes a property of one of the {@linkplain #getSupportedTypes() supported types}.
      */
-    void process(AnnotationNode registroidAnnotation, ClassNode targetClass, PropertyNode property, RegistroidASTTransformer transformer, String modId)
+    void process(AnnotationNode registroidAnnotation, ClassNode targetClass, PropertyNode property, RegistroidASTTransformer transformer, Supplier<String> modId)
 
     /**
      * The types this addon can process. (e.g. {@linkplain net.minecraft.world.item.Item Item}, {@linkplain net.minecraft.world.level.block.Block block})
@@ -35,4 +42,12 @@ interface RegistroidAddon {
      * @see ga.ozli.minecraftmods.groovylicious.transform.Registroid#value()
      */
     List<PropertyExpression> getRequiredRegistries()
+
+    /**
+     * A helper that creates a property expression for a registry key in {@link Registry}, in the following way:
+     * <pre>{@code GeneralUtils.propX(GeneralUtils.classX(REGISTRY_TYPE), "${name}_REGISTRY")}</pre>
+     */
+    default PropertyExpression registryKeyProperty(String name) {
+        GeneralUtils.propX(GeneralUtils.classX(REGISTRY_TYPE), "${name}_REGISTRY")
+    }
 }

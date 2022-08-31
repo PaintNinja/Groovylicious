@@ -46,4 +46,15 @@ class RegistroidTest {
     static final class Recipes {
         static final RecipeType HELLO_WORLD
     }
+
+    @Registroid(value = { Registry.ITEM }, includeInnerClasses = true)
+    static final class InnersTest {
+        static final class Inner1 {
+            static final Item IT = new Item(new Item.Properties())
+        }
+        @RegistrationName('inner2/')
+        static final class Inner2 {
+            static final Item IT2 = new Item(new Item.Properties())
+        }
+    }
 }

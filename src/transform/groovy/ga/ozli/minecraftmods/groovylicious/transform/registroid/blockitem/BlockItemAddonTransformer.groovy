@@ -5,7 +5,6 @@ import ga.ozli.minecraftmods.groovylicious.transform.registroid.RegistrationName
 import ga.ozli.minecraftmods.groovylicious.transform.registroid.RegistroidASTTransformer
 import ga.ozli.minecraftmods.groovylicious.transform.registroid.RegistroidAddon
 import groovy.transform.CompileStatic
-import net.minecraft.core.Registry
 import net.minecraft.world.item.BlockItem
 import net.minecraft.world.item.Item
 import net.minecraft.world.level.block.Block
@@ -15,6 +14,8 @@ import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.PropertyExpression
 import org.codehaus.groovy.ast.tools.GeneralUtils
 import org.objectweb.asm.Opcodes
+
+import java.util.function.Supplier
 
 @CompileStatic
 class BlockItemAddonTransformer implements RegistroidAddon {
@@ -26,7 +27,7 @@ class BlockItemAddonTransformer implements RegistroidAddon {
     public static final ClassNode ITEM_TYPE = ClassHelper.make(Item)
 
     @Override
-    void process(AnnotationNode registroidAnnotation, ClassNode targetClass, PropertyNode property, RegistroidASTTransformer transformer, String modId) {
+    void process(AnnotationNode registroidAnnotation, ClassNode targetClass, PropertyNode property, RegistroidASTTransformer transformer, Supplier<String> modId) {
         final myAnnotation = targetClass.annotations.find { it.classNode == ANNOTATION_TYPE }
         final propertyAnnotation = property.annotations.find { it.classNode == ANNOTATION_TYPE }
         if (propertyAnnotation?.members?.get('value') === null && myAnnotation.getMember('value') === null) return
@@ -93,8 +94,6 @@ class BlockItemAddonTransformer implements RegistroidAddon {
 
     @Override
     List<PropertyExpression> getRequiredRegistries() {
-        return List.of(
-                GeneralUtils.propX(GeneralUtils.classX(ClassHelper.make(Registry)), 'ITEM_REGISTRY')
-        )
+        return [registryKeyProperty('ITEM')]
     }
 }

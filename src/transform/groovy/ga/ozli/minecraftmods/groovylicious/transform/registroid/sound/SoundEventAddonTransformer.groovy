@@ -3,7 +3,6 @@ package ga.ozli.minecraftmods.groovylicious.transform.registroid.sound
 import ga.ozli.minecraftmods.groovylicious.transform.registroid.RegistroidASTTransformer
 import ga.ozli.minecraftmods.groovylicious.transform.registroid.RegistroidAddon
 import groovy.transform.CompileStatic
-import net.minecraft.core.Registry
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.sounds.SoundEvent
 import org.codehaus.groovy.ast.AnnotationNode
@@ -16,19 +15,21 @@ import org.codehaus.groovy.ast.expr.ConstructorCallExpression
 import org.codehaus.groovy.ast.expr.PropertyExpression
 import org.codehaus.groovy.ast.tools.GeneralUtils
 
+import java.util.function.Supplier
+
 @CompileStatic
 class SoundEventAddonTransformer implements RegistroidAddon {
     private static final ClassNode SOUND_EVENT_TYPE = ClassHelper.make(SoundEvent)
     private static final ClassNode RL_TYPE = ClassHelper.make(ResourceLocation)
 
     @Override
-    void process(AnnotationNode registroidAnnotation, ClassNode targetClass, PropertyNode property, RegistroidASTTransformer transformer, String modId) {
+    void process(AnnotationNode registroidAnnotation, ClassNode targetClass, PropertyNode property, RegistroidASTTransformer transformer, Supplier<String> modId) {
         if (property.field.initialValueExpression === null) {
             property.field.setInitialValueExpression(
                     GeneralUtils.ctorX(SOUND_EVENT_TYPE, GeneralUtils.ctorX(
                             RL_TYPE, GeneralUtils.args(
-                            GeneralUtils.constX(modId), GeneralUtils.constX(transformer.getRegName(property))
-                    )
+                            GeneralUtils.constX(modId.get()), GeneralUtils.constX(transformer.getRegName(property))
+                        )
                     ))
             )
         } else if (property.field.initialValueExpression instanceof ConstructorCallExpression) {
@@ -39,7 +40,7 @@ class SoundEventAddonTransformer implements RegistroidAddon {
                 if (arg0 instanceof ConstantExpression && arg0.value === null) {
                     args.expressions.set(0, GeneralUtils.ctorX(
                             RL_TYPE, GeneralUtils.args(
-                            GeneralUtils.constX(modId), GeneralUtils.constX(transformer.getRegName(property))
+                            GeneralUtils.constX(modId.get()), GeneralUtils.constX(transformer.getRegName(property))
                         )
                     ))
                 }
@@ -54,8 +55,6 @@ class SoundEventAddonTransformer implements RegistroidAddon {
 
     @Override
     List<PropertyExpression> getRequiredRegistries() {
-        return [
-                GeneralUtils.propX(GeneralUtils.classX(ClassHelper.make(Registry)), 'SOUND_EVENT_REGISTRY')
-        ]
+        return [registryKeyProperty('SOUND_EVENT')]
     }
 }
