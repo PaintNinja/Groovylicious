@@ -6,6 +6,8 @@ import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.components.PlainTextButton
 import net.minecraft.network.chat.Component
 
+import javax.annotation.Nullable
+
 import static ga.ozli.minecraftmods.groovylicious.api.gui.ColoursRegistry.instance as Colours
 
 /**
@@ -16,16 +18,10 @@ class EnhancedPlainTextButton extends PlainTextButton {
 
     private final int textColour
 
-    EnhancedPlainTextButton(int x, int y, int width, int height, Component message, OnPress onPress, Font font) {
+    EnhancedPlainTextButton(int x, int y, int width, int height, Component message, OnPress onPress, Font font, @Nullable Colour textColour = null) {
         super(x, y, width, height, message, onPress, font)
 
-        this.textColour = Colours.WHITE.get()
-    }
-
-    EnhancedPlainTextButton(int x, int y, int width, int height, Component message, OnPress onPress, Font font, Colour textColour) {
-        super(x, y, width, height, message, onPress, font)
-
-        this.textColour = textColour.get() ?: Colours.WHITE.get()
+        this.textColour = textColour?.get() ?: Colours.WHITE.get()
     }
 
     @Override

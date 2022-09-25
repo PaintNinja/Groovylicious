@@ -9,6 +9,7 @@ import ga.ozli.minecraftmods.groovylicious.transform.TransformUtils
 import groovy.transform.CompileStatic
 import groovy.transform.Memoized
 import groovyjarjarasm.asm.MethodVisitor
+import io.github.groovymc.cgl.transform.util.ModIdRequester
 import net.minecraftforge.common.ForgeConfigSpec
 import net.minecraftforge.fml.ModLoadingContext
 import net.minecraftforge.fml.config.ModConfig
@@ -66,7 +67,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
 
         // get the configType and modId from the annotation
         configType = getMemberConfigType(configAnnotation, configDataClass)
-        modId = getMemberStringValue(configAnnotation, 'modId', ModRegistry.getData(configDataClass.getPackageName())?.modId())
+        modId = getMemberStringValue(configAnnotation, 'modId', ModRegistry.getData(configDataClass.packageName)?.modId())
 
         if (DEBUG) println SV(configType, modId)
 
@@ -109,7 +110,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                 // Looks like the @GMod is in a different file, let's register a transform to the
                 // GModASTTransformer to add a static { configDataClass.init() } to the Mod's main class
                 if (DEBUG) println "Adding transform to @GMod"
-                GModASTTransformer.registerTransformer { ClassNode modClass, AnnotationNode modAnnotation, SourceUnit source$ ->
+                GModASTTransformer.registerTransformer(modId) { ClassNode modClass, AnnotationNode modAnnotation, SourceUnit sourceUnit ->
                     if (DEBUG) println "Adding a call to ${configDataClass.nameWithoutPackage}'s init() method from ${modClass.name}"
                     modClass.addStaticInitializerStatements([
                             GeneralUtils.stmt(

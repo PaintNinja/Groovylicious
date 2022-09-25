@@ -3,6 +3,7 @@ package ga.ozli.minecraftmods.groovylicious.dsl
 import ga.ozli.minecraftmods.groovylicious.api.gui.Colour
 import groovy.transform.CompileStatic
 import net.minecraft.ChatFormatting
+import net.minecraft.network.chat.TextColor
 
 import static ga.ozli.minecraftmods.groovylicious.api.gui.ColoursRegistry.instance as Colours
 
@@ -31,6 +32,10 @@ trait TextColourTrait {
     }
 
     void textColour(final ChatFormatting colour) {
+        this.textColour = Colour.of(colour)
+    }
+
+    void textColour(final TextColor colour) {
         this.textColour = Colour.of(colour)
     }
 

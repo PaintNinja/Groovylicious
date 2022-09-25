@@ -48,6 +48,8 @@ class ClientForgeEvents {
                 onTooltip { Button button, PoseStack poseStack, int mouseX, int mouseY ->
                     println "Tooltip"
                 }
+
+//                tooltip "Tooltip"
             }
 
             label {

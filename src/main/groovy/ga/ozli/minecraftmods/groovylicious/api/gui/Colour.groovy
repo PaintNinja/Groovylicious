@@ -81,6 +81,12 @@ class Colour {
         this.rgb = argb[1..3] as int[]
     }
 
+    Colour(TextColor colour) {
+        this.packed = colour.getValue()
+        this.argb = [FastColor.ARGB32.alpha(packed), FastColor.ARGB32.red(packed), FastColor.ARGB32.green(packed), FastColor.ARGB32.blue(packed)]
+        this.rgb = argb[1..3] as int[]
+    }
+
     Colour(Map<String, Integer> args) {
         if (args.argb) { // new Colour(argb: [255, 255, 255, 255])
             this.argb = args.argb as int[]
@@ -156,6 +162,11 @@ class Colour {
 
     @Pure
     static Colour of(ChatFormatting colour) {
+        return new Colour(colour)
+    }
+
+    @Pure
+    static Colour of(TextColor colour) {
         return new Colour(colour)
     }
 

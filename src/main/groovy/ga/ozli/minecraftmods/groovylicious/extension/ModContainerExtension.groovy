@@ -7,12 +7,16 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
 import net.minecraftforge.client.ConfigScreenHandler
 import net.minecraftforge.fml.ModContainer
+import io.github.groovymc.cgl.extension.EnvironmentExtension
 
 import java.util.function.BiFunction
 import java.util.function.Function
 
+import static io.github.groovymc.cgl.extension.EnvironmentExtension.Side
+
 @POJO
 @CompileStatic
+@EnvironmentExtension(Side.CLIENT)
 class ModContainerExtension {
     /**
      * Registers a config screen for your mod so that the "Config" button on the Mods menu will open the provided screen.

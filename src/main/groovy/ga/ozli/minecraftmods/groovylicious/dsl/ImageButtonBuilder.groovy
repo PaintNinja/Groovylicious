@@ -69,8 +69,13 @@ class ImageButtonBuilder extends ButtonBuilder {
     }
 
     @Requires({ this.position && this.size && this.resourceLocation })
-    @Override
     Button buildButton() {
+        return buildImageButton()
+    }
+
+    @Requires({ this.position && this.size && this.resourceLocation })
+    @Override
+    Button buildButton(ExtensibleScreen screen) {
         return buildImageButton()
     }
 

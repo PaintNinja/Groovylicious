@@ -25,7 +25,7 @@ class PlainTextButtonBuilder extends ButtonBuilder implements TextColourTrait {
 
     @Requires({ this.position && this.size && this.text })
     @Override
-    Button buildButton() {
+    Button buildButton(ExtensibleScreen screen) {
         return buildPlainTextButton()
     }
 
