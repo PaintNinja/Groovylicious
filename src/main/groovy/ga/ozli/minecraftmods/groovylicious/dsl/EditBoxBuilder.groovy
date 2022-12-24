@@ -1,64 +1,100 @@
 package ga.ozli.minecraftmods.groovylicious.dsl
 
-import ga.ozli.minecraftmods.groovylicious.api.gui.Colour
-import ga.ozli.minecraftmods.groovylicious.api.gui.ExtensibleScreen
+import ga.ozli.minecraftmods.groovylicious.api.gui.ComponentUtils
+import ga.ozli.minecraftmods.groovylicious.dsl.traits.BoundsTrait
+import ga.ozli.minecraftmods.groovylicious.dsl.traits.FontTrait
+import ga.ozli.minecraftmods.groovylicious.dsl.traits.MessageTrait
 import groovy.contracts.Requires
 import groovy.transform.CompileStatic
-import net.minecraft.ChatFormatting
 import net.minecraft.client.gui.components.EditBox
-import org.apache.groovy.lang.annotation.Incubating
+import net.minecraft.network.chat.Component
 
-import static ga.ozli.minecraftmods.groovylicious.api.gui.ColoursRegistry.instance as Colours
+import javax.annotation.Nullable
+import java.util.function.Predicate
 
-@Incubating
+// Todo: Colour support
 @CompileStatic
-class EditBoxBuilder implements PositionTrait, SizeTrait, TextTrait {
-    boolean bordered = true
+class EditBoxBuilder implements FontTrait, BoundsTrait, MessageTrait {
+    boolean editable = true
+    boolean visible = true
+    boolean focused = false
     boolean canLoseFocus = true
-    boolean isEditable = true
-    Colour textColour = Colours.EDITBOX_TEXT
-    Colour textColourUneditable = Colours.EDITBOX_TEXTUNEDITABLE
+    @Nullable String suggestion = null
+    @Nullable Component hint = null
+    int maxLength = 32
+    Predicate<String> filter = (String text) -> true
 
-    void textColour(final Colour colour) {
-        this.textColour = colour
+    EditBoxBuilder() {}
+
+    EditBoxBuilder(final Closure closure) {
+        this.tap(closure)
     }
 
-    void textColour(final int packed) {
-        this.textColour = Colour.of(packed)
+    EditBoxBuilder(final Component message) {
+        this.message = message
     }
 
-    void textColour(final int red, final int green, final int blue) {
-        this.textColour = Colour.of(red, green, blue)
+    EditBoxBuilder(final String message) {
+        this.message = ComponentUtils.stringToComponent(message)
     }
 
-    void textColour(final int alpha, final int red, final int green, final int blue) {
-        this.textColour = Colour.of(alpha, red, green, blue)
+    EditBoxBuilder(final Component message, final Closure closure) {
+        this.message = message
+        this.tap(closure)
     }
 
-    void textColour(final int[] argb) {
-        this.textColour = Colour.of(argb)
+    EditBoxBuilder(final String message, final Closure closure) {
+        this.message = ComponentUtils.stringToComponent(message)
+        this.tap(closure)
     }
 
-    void textColour(final ChatFormatting colour) {
-        this.textColour = Colour.of(colour)
+    void editable(final boolean editable) {
+        this.editable = editable
     }
 
-    void textColour(final Map args) {
-        this.textColour = new Colour(args)
+    void visible(final boolean visible) {
+        this.visible = visible
     }
 
-    @Requires({ this.position && this.size && this.text })
-    EditBox buildEditbox(final ExtensibleScreen extensibleScreen) {
-        return new EditBox(extensibleScreen.font, this.position.x, this.position.y, this.size.width, this.size.height, this.text)
+    void focused(final boolean focused) {
+        this.focused = focused
     }
 
-    // Note: this closure is meant to be run inside a Screen's init method, such as ExtensibleScreen's onPreInit/onInit/onPostInit
-    @Requires({ this.position && this.size && this.text })
-    Closure buildClosure() {
-        return { ExtensibleScreen screenInstance ->
-            screenInstance.addRenderableWidget(this.buildEditbox(screenInstance))
-        }
+    void canLoseFocus(final boolean canLoseFocus) {
+        this.canLoseFocus = canLoseFocus
     }
 
+    void suggestion(@Nullable String suggestion) {
+        this.suggestion = suggestion
+    }
 
+    void hint(@Nullable Component hint) {
+        this.hint = hint
+    }
+
+    void hint(@Nullable String hint) {
+        this.hint = hint ? ComponentUtils.stringToComponent(hint) : null
+    }
+
+    void maxLength(final int maxLength) {
+        this.maxLength = maxLength
+    }
+
+    void filter(final Predicate<String> filter) {
+        this.filter = filter
+    }
+
+    @Requires({ font && position && size && message }) // ensure all required fields are set
+    EditBox build() {
+        final EditBox editBox = new EditBox(font, position.x, position.y, size.width, size.height, message)
+        editBox.editable = editable
+        editBox.visible = visible
+        editBox.focus = focused
+        editBox.canLoseFocus = canLoseFocus
+        editBox.suggestion = suggestion
+        editBox.hint = hint
+        editBox.maxLength = maxLength
+        editBox.filter = filter
+        return editBox
+    }
 }

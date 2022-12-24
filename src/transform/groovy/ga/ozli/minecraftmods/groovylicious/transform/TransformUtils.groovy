@@ -1,6 +1,6 @@
 package ga.ozli.minecraftmods.groovylicious.transform
 
-import com.matyrobbrt.gml.GMod
+
 import groovy.transform.CompileStatic
 import groovy.transform.Generated
 import groovy.transform.NamedParam
@@ -21,9 +21,6 @@ import static org.objectweb.asm.Opcodes.ACC_PUBLIC
 
 @CompileStatic
 class TransformUtils {
-    static final ClassNode MOD_TYPE = ClassHelper.make(GMod)
-    static final ClassNode EXCLUDE_TYPE = ClassHelper.make(Exclude)
-
     static final AnnotationNode GENERATED_ANNOTATION = new AnnotationNode(ClassHelper.make(Generated))
 
     static final int CONSTANT_MODIFIERS = ACC_PRIVATE | ACC_STATIC | ACC_FINAL
@@ -159,6 +156,6 @@ class TransformUtils {
     }
 
     static boolean shouldExclude(final AnnotatedNode field) {
-        return isAnnotatedWith(EXCLUDE_TYPE, field)
+        return isAnnotatedWith(TransformTypes.EXCLUDE_TYPE, field)
     }
 }

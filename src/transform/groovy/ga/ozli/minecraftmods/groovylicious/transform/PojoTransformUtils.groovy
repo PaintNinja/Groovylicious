@@ -29,10 +29,8 @@ class PojoTransformUtils {
         DIRECT_PRIMITIVE_CAST.add(new PrimitiveType(ClassHelper.double_TYPE, ClassHelper.Double_TYPE, 'doubleValue'))
     }
 
-    public static final ClassNode LIST = ClassHelper.make(List)
-
     static Statement cast(ClassNode target, @ClosureParams(value = SimpleType, options = 'groovyjarjarasm.asm.MethodVisitor') Closure closure) {
-        if (target == LIST) {
+        if (target == TransformTypes.LIST_TYPE) {
             return GeneralUtils.stmt(GeneralUtils.bytecodeX(target) {
                 closure(it)
                 it.visitTypeInsn(CHECKCAST, Type.getInternalName(List))

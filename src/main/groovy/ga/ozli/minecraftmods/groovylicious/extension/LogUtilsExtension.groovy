@@ -2,11 +2,9 @@ package ga.ozli.minecraftmods.groovylicious.extension
 
 import com.mojang.logging.LogUtils
 import groovy.transform.CompileStatic
-import groovy.transform.stc.POJO
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-@POJO
 @CompileStatic
 class LogUtilsExtension {
     /**

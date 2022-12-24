@@ -3,13 +3,15 @@ package ga.ozli.minecraftmods.groovylicious.extension
 import ga.ozli.minecraftmods.groovylicious.api.gui.Colour
 import groovy.transform.CompileStatic
 import groovy.transform.stc.POJO
-import io.github.groovymc.cgl.extension.EnvironmentExtension
-import io.github.lukebemish.groovyduvet.wrapper.minecraft.api.chat.StyleBuilder
+import io.github.groovymc.cgl.api.extension.EnvironmentExtension
+import io.github.groovymc.cgl.api.chat.StyleBuilder
 import net.minecraft.network.chat.Style
+
+import static io.github.groovymc.cgl.api.extension.EnvironmentExtension.Side
 
 @POJO
 @CompileStatic
-@EnvironmentExtension(EnvironmentExtension.Side.CLIENT)
+@EnvironmentExtension(Side.CLIENT)
 class ColourExtension {
     static Style withColor(Style self, Colour colour) {
         self.withColor(colour?.get() ?: null)

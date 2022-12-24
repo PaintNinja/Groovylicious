@@ -1,18 +1,18 @@
 package ga.ozli.minecraftmods.groovylicious.extension
 
-import ga.ozli.minecraftmods.groovylicious.api.gui.ExtensibleScreen
+
 import groovy.transform.CompileStatic
 import groovy.transform.stc.POJO
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
 import net.minecraftforge.client.ConfigScreenHandler
 import net.minecraftforge.fml.ModContainer
-import io.github.groovymc.cgl.extension.EnvironmentExtension
+import io.github.groovymc.cgl.api.extension.EnvironmentExtension
 
 import java.util.function.BiFunction
 import java.util.function.Function
 
-import static io.github.groovymc.cgl.extension.EnvironmentExtension.Side
+import static io.github.groovymc.cgl.api.extension.EnvironmentExtension.Side
 
 @POJO
 @CompileStatic
@@ -54,13 +54,13 @@ class ModContainerExtension {
      * @param screen The ExtensibleScreen to register the config screen for.
      * @author Paint_Ninja via Groovylicious
      */
-    static void registerConfigScreen(ModContainer self, ExtensibleScreen screen) {
-        self.registerExtensionPoint(
-                ConfigScreenHandler.ConfigScreenFactory,
-                () -> new ConfigScreenHandler.ConfigScreenFactory((Minecraft mcInstance, Screen returnTo) -> {
-                    screen.returnToScreen = returnTo
-                    return screen
-                })
-        )
-    }
+//    static void registerConfigScreen(ModContainer self, ExtensibleScreen screen) {
+//        self.registerExtensionPoint(
+//                ConfigScreenHandler.ConfigScreenFactory,
+//                () -> new ConfigScreenHandler.ConfigScreenFactory((Minecraft mcInstance, Screen returnTo) -> {
+//                    screen.returnToScreen = returnTo
+//                    return screen
+//                })
+//        )
+//    }
 }

@@ -11,7 +11,7 @@ import javax.annotation.Nullable
 import static ga.ozli.minecraftmods.groovylicious.api.gui.ColoursRegistry.instance as Colours
 
 /**
- * A PlainTextButton that supports custom text colours.
+ * A PlainTextButton that supports custom message colours.
  */
 @CompileStatic
 class EnhancedPlainTextButton extends PlainTextButton {

@@ -1,5 +1,9 @@
 moduleName=Groovylicious Extension Modules
-moduleVersion=0.2.0
-staticExtensionClasses=ga.ozli.minecraftmods.groovylicious.extension.LogUtilsExtension
+moduleVersion=0.3.0
+
+staticExtensionClasses=ga.ozli.minecraftmods.groovylicious.extension.LogUtilsExtension,\
+                       ga.ozli.minecraftmods.groovylicious.extension.StaticGuiExtension
+
 extensionClasses=ga.ozli.minecraftmods.groovylicious.extension.ModContainerExtension,\
-                 ga.ozli.minecraftmods.groovylicious.extension.ColourExtension
+                 ga.ozli.minecraftmods.groovylicious.extension.ColourExtension,\
+                 ga.ozli.minecraftmods.groovylicious.extension.ButtonBuilderExtension

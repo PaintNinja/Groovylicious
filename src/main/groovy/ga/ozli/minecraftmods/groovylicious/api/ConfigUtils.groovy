@@ -1,6 +1,6 @@
 package ga.ozli.minecraftmods.groovylicious.api
 
-import ga.ozli.minecraftmods.groovylicious.api.gui.ExtensibleScreen
+
 import groovy.transform.CompileStatic
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
@@ -24,15 +24,15 @@ class ConfigUtils {
      *
      * @throws NoSuchElementException if the modId cannot be found.
      */
-    static void registerConfigScreen(String modId, ExtensibleScreen screen) throws NoSuchElementException {
-        ModList.get().getModContainerById(modId).get().registerExtensionPoint(
-                ConfigScreenHandler.ConfigScreenFactory,
-                () -> new ConfigScreenHandler.ConfigScreenFactory((Minecraft mcInstance, Screen returnTo) -> {
-                    screen.returnToScreen = returnTo
-                    return screen
-                })
-        )
-    }
+//    static void registerConfigScreen(String modId, ExtensibleScreen screen) throws NoSuchElementException {
+//        ModList.get().getModContainerById(modId).get().registerExtensionPoint(
+//                ConfigScreenHandler.ConfigScreenFactory,
+//                () -> new ConfigScreenHandler.ConfigScreenFactory((Minecraft mcInstance, Screen returnTo) -> {
+//                    screen.returnToScreen = returnTo
+//                    return screen
+//                })
+//        )
+//    }
 
     /**
      * Similar to {@link #registerConfigScreen(String, BiFunction)} but without the mcInstance (you can use {@code Minecraft.instance} instead).

@@ -6,10 +6,10 @@ import com.matyrobbrt.gml.transform.api.ModRegistry
 import com.matyrobbrt.gml.transform.gmods.GModASTTransformer
 import ga.ozli.minecraftmods.groovylicious.transform.PojoTransformUtils
 import ga.ozli.minecraftmods.groovylicious.transform.TransformUtils
+import ga.ozli.minecraftmods.groovylicious.transform.TransformTypes
 import groovy.transform.CompileStatic
 import groovy.transform.Memoized
 import groovyjarjarasm.asm.MethodVisitor
-import io.github.groovymc.cgl.transform.util.ModIdRequester
 import net.minecraftforge.common.ForgeConfigSpec
 import net.minecraftforge.fml.ModLoadingContext
 import net.minecraftforge.fml.config.ModConfig
@@ -35,7 +35,6 @@ class ConfigASTTransformation extends AbstractASTTransformation {
     private static final boolean DEBUG = false
 
     private static final ClassNode CONFIG_BUILDER_TYPE = ClassHelper.make(ForgeConfigSpec.Builder)
-    private static final ClassNode LIST_TYPE = ClassHelper.make(List)
     private static final ClassNode SUPPLIERS_TYPE = ClassHelper.make(Suppliers)
     private static final ClassNode PREDICATES_TYPE = ClassHelper.make(Predicates)
     private static final ClassNode CONFIG_SPEC_TYPE = ClassHelper.make(ForgeConfigSpec)
@@ -92,7 +91,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
             if (!configDataClass.outerClasses.empty) {
                 configDataClass.outerClasses.each { outerClass ->
                     if (DEBUG) println SV(outerClass)
-                    final boolean isModMainClass = outerClass.annotations*.classNode.find { it == TransformUtils.MOD_TYPE }
+                    final boolean isModMainClass = outerClass.annotations*.classNode.find { it == TransformTypes.MOD_TYPE }
 
                     // We found an outer class annotated with @GMod, so we know that this configDataClass is inside
                     // the Mod's main class and can add a static { configDataClass.init() } to it
@@ -281,11 +280,11 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         }
 
         boolean isList = false
-        if (property.type == LIST_TYPE) {
+        if (property.type == TransformTypes.LIST_TYPE) {
             final gType = property.type.genericsTypes.size() == 0 ? ClassHelper.OBJECT_TYPE : property.type.genericsTypes[0].type
             configValueType = ConfigTypes.list(gType)
             isList = true
-            propertyType = GenericsUtils.makeClassSafeWithGenerics(LIST_TYPE, new GenericsType(gType))
+            propertyType = GenericsUtils.makeClassSafeWithGenerics(TransformTypes.LIST_TYPE, new GenericsType(gType))
         }
 
 //        ClosureExpression predicate = (ClosureExpression) annotation?.members?.get('validator')
@@ -400,7 +399,7 @@ class ConfigASTTransformation extends AbstractASTTransformation {
                         GeneralUtils.callX(
                                 configBuilder, 'defineListAllowEmpty',
                                 TransformUtils.conditionalArgs(
-                                        GeneralUtils.callX(LIST_TYPE, 'of', GeneralUtils.constX(property.name)),
+                                        GeneralUtils.callX(TransformTypes.LIST_TYPE, 'of', GeneralUtils.constX(property.name)),
                                         GeneralUtils.callX(SUPPLIERS_TYPE, 'ofInstance', getPropertyValueOrDefault(property)),
                                         /*predicate ?: */ GeneralUtils.callX(PREDICATES_TYPE, 'alwaysTrue')
                                 ))
@@ -522,8 +521,8 @@ class ConfigASTTransformation extends AbstractASTTransformation {
         if (property.field.initialValueExpression === null) {
             if (property.type == ClassHelper.STRING_TYPE || property.type == ClassHelper.GSTRING_TYPE) {
                 return ConstantExpression.EMPTY_STRING
-            } else if (property.type == LIST_TYPE) {
-                return GeneralUtils.callX(LIST_TYPE, 'of')
+            } else if (property.type == TransformTypes.LIST_TYPE) {
+                return GeneralUtils.callX(TransformTypes.LIST_TYPE, 'of')
             }
         }
         return property.field.initialValueExpression

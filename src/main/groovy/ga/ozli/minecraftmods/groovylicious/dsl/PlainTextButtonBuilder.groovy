@@ -1,39 +1,44 @@
 package ga.ozli.minecraftmods.groovylicious.dsl
 
-
-import ga.ozli.minecraftmods.groovylicious.api.gui.EnhancedPlainTextButton
-import ga.ozli.minecraftmods.groovylicious.api.gui.ExtensibleScreen
+import ga.ozli.minecraftmods.groovylicious.api.gui.ComponentUtils
+import ga.ozli.minecraftmods.groovylicious.dsl.traits.BoundsTrait
+import ga.ozli.minecraftmods.groovylicious.dsl.traits.FontTrait
+import ga.ozli.minecraftmods.groovylicious.dsl.traits.MessageTrait
+import ga.ozli.minecraftmods.groovylicious.dsl.traits.OnPressTrait
 import groovy.contracts.Requires
 import groovy.transform.CompileStatic
-import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.components.Button
-import org.apache.groovy.lang.annotation.Incubating
+import net.minecraft.client.gui.components.PlainTextButton
+import net.minecraft.network.chat.Component
 
-@Incubating
+// Todo: double check there's setters for all fields in the traits
 @CompileStatic
-class PlainTextButtonBuilder extends ButtonBuilder implements TextColourTrait {
+class PlainTextButtonBuilder implements BoundsTrait, MessageTrait, OnPressTrait, FontTrait {
+    PlainTextButtonBuilder() {}
 
-    @Requires({ this.position && this.size && this.text })
-    EnhancedPlainTextButton buildPlainTextButton() {
-        return new EnhancedPlainTextButton(this.position.x, this.position.y, this.size.width, this.size.height, this.text, this.onPress, Minecraft.instance.font, textColour)
+    PlainTextButtonBuilder(final Closure closure) {
+        this.tap(closure)
     }
 
-    @Requires({ this.position && this.size && this.text })
-    EnhancedPlainTextButton buildPlainTextButton(final ExtensibleScreen extensibleScreen) {
-        return new EnhancedPlainTextButton(this.position.x, this.position.y, this.size.width, this.size.height, this.text, this.onPress, extensibleScreen.font, textColour)
+    PlainTextButtonBuilder(final Component message) {
+        this.message = message
     }
 
-    @Requires({ this.position && this.size && this.text })
-    @Override
-    Button buildButton(ExtensibleScreen screen) {
-        return buildPlainTextButton()
+    PlainTextButtonBuilder(final String message) {
+        this.message = ComponentUtils.stringToComponent(message)
     }
 
-    @Requires({ this.position && this.size && this.text })
-    @Override
-    Closure buildClosure() {
-        return { ExtensibleScreen screenInstance ->
-            screenInstance.addRenderableWidget(this.buildPlainTextButton(screenInstance))
-        }
+    PlainTextButtonBuilder(final Component message, final Closure closure) {
+        this.message = message
+        this.tap(closure)
+    }
+
+    PlainTextButtonBuilder(final String message, final Closure closure) {
+        this.message = ComponentUtils.stringToComponent(message)
+        this.tap(closure)
+    }
+
+    @Requires({ position && size && message && onPress && font })
+    PlainTextButton build() {
+        return new PlainTextButton(position.x, position.y, size.width, size.height, message, onPress, font)
     }
 }
