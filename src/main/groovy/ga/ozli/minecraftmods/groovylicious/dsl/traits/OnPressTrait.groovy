@@ -11,11 +11,11 @@ trait OnPressTrait {
 
     void onPress(@ClosureParams(value = SimpleType, options = 'net.minecraft.client.gui.components.Button')
                  final Button.OnPress onPress) {
-        this.onPress = onPress
+        this.@onPress = onPress
     }
 
     void setOnPress(@ClosureParams(value = SimpleType, options = 'net.minecraft.client.gui.components.Button')
                  final Button.OnPress onPress) {
-        this.onPress = onPress
+        this.@onPress = onPress
     }
 }

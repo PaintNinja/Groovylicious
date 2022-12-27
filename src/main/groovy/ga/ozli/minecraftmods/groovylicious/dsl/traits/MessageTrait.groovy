@@ -29,6 +29,14 @@ trait MessageTrait {
         this.message = ComponentUtils.stringToComponent(text)
     }
 
+    void setText(final Component text) {
+        this.text(text)
+    }
+
+    void setText(@Nonnull final String text) {
+        this.text(text)
+    }
+
     void message(final Component message) {
         this.message = message
     }
@@ -45,6 +53,14 @@ trait MessageTrait {
      * @param text
      */
     void message(@Nonnull final String message) {
+        this.message = ComponentUtils.stringToComponent(message)
+    }
+
+    void setMessage(final Component message) {
+        this.message = message
+    }
+
+    void setMessage(@Nonnull final String message) {
         this.message = ComponentUtils.stringToComponent(message)
     }
 }

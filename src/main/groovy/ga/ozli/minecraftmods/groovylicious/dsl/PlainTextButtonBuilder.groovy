@@ -1,21 +1,18 @@
 package ga.ozli.minecraftmods.groovylicious.dsl
 
-import ga.ozli.minecraftmods.groovylicious.api.gui.ComponentUtils
-import ga.ozli.minecraftmods.groovylicious.dsl.traits.BoundsTrait
 import ga.ozli.minecraftmods.groovylicious.dsl.traits.FontTrait
-import ga.ozli.minecraftmods.groovylicious.dsl.traits.MessageTrait
-import ga.ozli.minecraftmods.groovylicious.dsl.traits.OnPressTrait
 import groovy.contracts.Requires
 import groovy.transform.CompileStatic
 import net.minecraft.client.gui.components.PlainTextButton
 import net.minecraft.network.chat.Component
 
-// Todo: double check there's setters for all fields in the traits
+import static groovy.lang.Closure.DELEGATE_FIRST
+
 @CompileStatic
-class PlainTextButtonBuilder implements BoundsTrait, MessageTrait, OnPressTrait, FontTrait {
+class PlainTextButtonBuilder extends ButtonBuilder implements FontTrait {
     PlainTextButtonBuilder() {}
 
-    PlainTextButtonBuilder(final Closure closure) {
+    PlainTextButtonBuilder(@DelegatesTo(value = PlainTextButtonBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
         this.tap(closure)
     }
 
@@ -24,21 +21,28 @@ class PlainTextButtonBuilder implements BoundsTrait, MessageTrait, OnPressTrait,
     }
 
     PlainTextButtonBuilder(final String message) {
-        this.message = ComponentUtils.stringToComponent(message)
+        this.message = message
     }
 
-    PlainTextButtonBuilder(final Component message, final Closure closure) {
+    PlainTextButtonBuilder(final Component message, @DelegatesTo(value = PlainTextButtonBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
         this.message = message
         this.tap(closure)
     }
 
-    PlainTextButtonBuilder(final String message, final Closure closure) {
-        this.message = ComponentUtils.stringToComponent(message)
+    PlainTextButtonBuilder(final String message, @DelegatesTo(value = PlainTextButtonBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
+        this.message = message
         this.tap(closure)
     }
 
-    @Requires({ position && size && message && onPress && font })
+    @Override
+//    @Requires({ position && size && message && onPress && font })
     PlainTextButton build() {
-        return new PlainTextButton(position.x, position.y, size.width, size.height, message, onPress, font)
+        final plainTextButton = new PlainTextButton(position.x, position.y, size.width, size.height, message, onPress, font)
+        plainTextButton.tooltip = tooltip
+        plainTextButton.tooltipDelay = tooltipDelay
+        plainTextButton.active = active
+        plainTextButton.visible = visible
+
+        return plainTextButton
     }
 }

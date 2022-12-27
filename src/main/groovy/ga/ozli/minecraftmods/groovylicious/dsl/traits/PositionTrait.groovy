@@ -10,10 +10,10 @@ import static groovy.lang.Closure.DELEGATE_FIRST
 
 @CompileStatic
 trait PositionTrait {
-    Position position
+    Position position = Position.DEFAULT
 
     void position(final Position position) {
-        this.position = position
+        this.@position = position
     }
 
     /**
@@ -34,7 +34,7 @@ trait PositionTrait {
      * @param y the vertical axis
      */
     void position(final int x, final int y) {
-        this.position = new Position(x, y)
+        this.@position = new Position(x, y)
     }
 
     /**
@@ -49,6 +49,35 @@ trait PositionTrait {
      */
     void position(@DelegatesTo(value = Position, strategy = DELEGATE_FIRST)
                   @ClosureParams(value = FirstParam.FirstGenericType) final Closure<Position> closure) {
-        this.position = new Position().tap(closure)
+        this.@position = new Position().tap(closure)
+    }
+
+    void setPosition(final Position position) {
+        this.@position = position
+    }
+
+    void setPosition(final int x, final int y) {
+        this.@position = new Position(x, y)
+    }
+
+    void setPosition(@DelegatesTo(value = Position, strategy = DELEGATE_FIRST)
+                     @ClosureParams(value = FirstParam.FirstGenericType) final Closure<Position> closure) {
+        this.@position = new Position().tap(closure)
+    }
+
+    void x(final int x) {
+        this.@position.x = x
+    }
+
+    void setX(final int x) {
+        this.@position.x = x
+    }
+
+    void y(final int y) {
+        this.@position.y = y
+    }
+
+    void setY(final int y) {
+        this.@position.y = y
     }
 }

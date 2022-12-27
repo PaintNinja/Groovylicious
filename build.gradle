@@ -45,7 +45,7 @@ minecraft {
             }
         }
 
-        client {}
+        client { args '--username', 'Dev##' }
         server { args '--nogui' }
     }
 }

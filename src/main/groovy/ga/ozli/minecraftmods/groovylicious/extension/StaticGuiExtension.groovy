@@ -1,15 +1,19 @@
 package ga.ozli.minecraftmods.groovylicious.extension
 
 import ga.ozli.minecraftmods.groovylicious.dsl.ButtonBuilder
+import ga.ozli.minecraftmods.groovylicious.dsl.CentredStringBuilder
 import ga.ozli.minecraftmods.groovylicious.dsl.EditBoxBuilder
 import ga.ozli.minecraftmods.groovylicious.dsl.PlainTextButtonBuilder
+import ga.ozli.minecraftmods.groovylicious.dsl.ScreenBuilder
 import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
 import io.github.groovymc.cgl.api.extension.EnvironmentExtension
 import net.minecraft.client.gui.components.Button
+import net.minecraft.client.gui.components.CenteredStringWidget
 import net.minecraft.client.gui.components.EditBox
 import net.minecraft.client.gui.components.PlainTextButton
+import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
 
 import static groovy.lang.Closure.DELEGATE_FIRST
@@ -34,6 +38,24 @@ class StaticGuiExtension {
                           @DelegatesTo(value = ButtonBuilder, strategy = DELEGATE_FIRST)
                           @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.ButtonBuilder') Closure closure) {
         return new ButtonBuilder(message, closure).build()
+    }
+
+    static CenteredStringWidget builder(CenteredStringWidget self,
+                                       @DelegatesTo(value = CentredStringBuilder, strategy = DELEGATE_FIRST)
+                                       @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.CentredStringBuilder') Closure closure) {
+        return new CentredStringBuilder(closure).build()
+    }
+
+    static CenteredStringWidget builder(CenteredStringWidget self, Component message,
+                                       @DelegatesTo(value = CentredStringBuilder, strategy = DELEGATE_FIRST)
+                                       @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.CentredStringBuilder') Closure closure) {
+        return new CentredStringBuilder(message, closure).build()
+    }
+
+    static CenteredStringWidget builder(CenteredStringWidget self, String message,
+                                       @DelegatesTo(value = CentredStringBuilder, strategy = DELEGATE_FIRST)
+                                       @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.CentredStringBuilder') Closure closure) {
+        return new CentredStringBuilder(message, closure).build()
     }
 
     static PlainTextButton builder(PlainTextButton self,
@@ -70,5 +92,23 @@ class StaticGuiExtension {
                            @DelegatesTo(value = EditBoxBuilder, strategy = DELEGATE_FIRST)
                            @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.EditBoxBuilder') Closure closure) {
         return new EditBoxBuilder(message, closure).build()
+    }
+
+    static Screen builder(Screen self,
+                          @DelegatesTo(value = ScreenBuilder, strategy = DELEGATE_FIRST)
+                          @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.ScreenBuilder') Closure closure) {
+        return new ScreenBuilder(closure).build()
+    }
+
+    static Screen builder(Screen self, Component title,
+                          @DelegatesTo(value = ScreenBuilder, strategy = DELEGATE_FIRST)
+                          @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.ScreenBuilder') Closure closure) {
+        return new ScreenBuilder(title, closure).build()
+    }
+
+    static Screen builder(Screen self, String title,
+                          @DelegatesTo(value = ScreenBuilder, strategy = DELEGATE_FIRST)
+                          @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.ScreenBuilder') Closure closure) {
+        return new ScreenBuilder(title, closure).build()
     }
 }

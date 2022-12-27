@@ -5,10 +5,10 @@ import com.matyrobbrt.gml.util.Environment
 import com.mojang.blaze3d.vertex.PoseStack
 import groovy.transform.CompileStatic
 import net.minecraft.client.gui.components.Button
+import net.minecraft.client.gui.components.EditBox
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.TitleScreen
 import net.minecraft.network.chat.CommonComponents
-import net.minecraft.network.chat.Component
 import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.client.event.ScreenEvent
 import net.minecraftforge.eventbus.api.SubscribeEvent
@@ -17,35 +17,10 @@ import net.minecraftforge.eventbus.api.SubscribeEvent
 @EventBusSubscriber(dist = Dist.CLIENT, environment = Environment.DEV)
 class ClientForgeEvents {
 
-    //@SubscribeEvent
+    @SubscribeEvent
     static void onScreenOpen(final ScreenEvent.Opening event) {
         if (event.newScreen instanceof TitleScreen)
-            event.newScreen = testGuiExtensions()
-    }
-
-    static Screen testGuiExtensions() {
-        return new Screen(CommonComponents.GUI_DONE) {
-            @Override
-            protected void init() {
-                super.init()
-                this.addRenderableWidget(Button.builder {
-                    message 'Hello World!'
-                    onPress { button ->
-                        GroovyliciousTest.log.info 'Button pressed'
-                    }
-                    position 10, 10
-                    size 100, 20
-                    bounds x: 10, y: 20,
-                           width: 100, height: 20
-                })
-            }
-
-            @Override
-            void render(PoseStack pose, int mouseX, int mouseY, float partialTick) {
-                this.renderBackground(pose);
-                super.render(pose, mouseX, mouseY, partialTick);
-            }
-        }
+            event.newScreen = ScreenTests.testScreenDSL()
     }
 
 //    static Screen testScreenDSL() {
