@@ -3,6 +3,8 @@ package ga.ozli.minecraftmods.groovylicious.dsl
 import ga.ozli.minecraftmods.groovylicious.api.gui.ComponentUtils
 import ga.ozli.minecraftmods.groovylicious.api.gui.ExtensibleScreen
 import groovy.transform.CompileStatic
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.SimpleType
 import net.minecraft.client.Minecraft
@@ -11,18 +13,15 @@ import net.minecraft.network.chat.Component
 import static groovy.lang.Closure.DELEGATE_FIRST
 
 @CompileStatic
+@Builder(builderStrategy = SimpleStrategy)
 class ScreenBuilder {
     @Lazy
-    private final ExtensibleScreen backingScreen = new ExtensibleScreen(title)
+    private ExtensibleScreen backingScreen = new ExtensibleScreen(title)
 
-    Component title
+    private Component title
     boolean renderBackground = true
 
     ScreenBuilder() {}
-
-    ScreenBuilder(@DelegatesTo(value = ScreenBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
-        this.tap(closure)
-    }
 
     ScreenBuilder(final Component title) {
         this.@title = title
@@ -30,6 +29,10 @@ class ScreenBuilder {
 
     ScreenBuilder(final String title) {
         this.@title = ComponentUtils.stringToComponent(title)
+    }
+
+    ScreenBuilder(@DelegatesTo(value = ScreenBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
+        this.tap(closure)
     }
 
     ScreenBuilder(final Component title, @DelegatesTo(value = ScreenBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
@@ -42,25 +45,21 @@ class ScreenBuilder {
         this.tap(closure)
     }
 
-    void title(final Component title) {
+    // region title
+    ScreenBuilder setTitle(final Component title) {
         this.@title = title
+        return this
     }
 
-    void title(final String title) {
+    ScreenBuilder setTitle(final String title) {
         this.@title = ComponentUtils.stringToComponent(title)
+        return this
     }
 
-    void setTitle(final Component title) {
-        this.@title = title
+    Component getTitle() {
+        return this.@title
     }
-
-    void setTitle(final String title) {
-        this.@title = ComponentUtils.stringToComponent(title)
-    }
-
-    void renderBackground(final boolean renderBackground) {
-        this.@renderBackground = renderBackground
-    }
+    // endregion title
 
     int getScreenHeight() {
         return this.backingScreen.height
@@ -71,7 +70,13 @@ class ScreenBuilder {
     }
 
     static Minecraft getMinecraft() {
-        return Minecraft.getInstance()
+        return Minecraft.instance
+    }
+
+    // region button
+    void button(@DelegatesTo(value = ButtonBuilder, strategy = DELEGATE_FIRST)
+                @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.ButtonBuilder') Closure closure) {
+        this.backingScreen.onInit << { ExtensibleScreen screen -> screen.addRenderableWidget(new ButtonBuilder(closure).build()) }
     }
 
     void button(final Component message,
@@ -85,10 +90,12 @@ class ScreenBuilder {
                 @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.ButtonBuilder') Closure closure) {
         this.backingScreen.onInit << { ExtensibleScreen screen -> screen.addRenderableWidget(new ButtonBuilder(message, closure).build()) }
     }
+    // endregion
 
-    void button(@DelegatesTo(value = ButtonBuilder, strategy = DELEGATE_FIRST)
-                @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.ButtonBuilder') Closure closure) {
-        this.backingScreen.onInit << { ExtensibleScreen screen -> screen.addRenderableWidget(new ButtonBuilder(closure).build()) }
+    // region centredString
+    void centredString(@DelegatesTo(value = CentredStringBuilder, strategy = DELEGATE_FIRST)
+                       @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.CentredStringBuilder') Closure closure) {
+        this.backingScreen.onInit << { ExtensibleScreen screen -> screen.addRenderableWidget(new CentredStringBuilder(closure).build()) }
     }
 
     void centredString(final Component message,
@@ -102,12 +109,9 @@ class ScreenBuilder {
                        @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.CentredStringBuilder') Closure closure) {
         this.backingScreen.onInit << { ExtensibleScreen screen -> screen.addRenderableWidget(new CentredStringBuilder(message, closure).build()) }
     }
+    // endregion
 
-    void centredString(@DelegatesTo(value = CentredStringBuilder, strategy = DELEGATE_FIRST)
-                       @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.CentredStringBuilder') Closure closure) {
-        this.backingScreen.onInit << { ExtensibleScreen screen -> screen.addRenderableWidget(new CentredStringBuilder(closure).build()) }
-    }
-
+    // region editBox
     void editBox(@DelegatesTo(value = EditBoxBuilder, strategy = DELEGATE_FIRST)
                  @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.EditBoxBuilder') Closure closure) {
         this.backingScreen.onInit << { ExtensibleScreen screen -> screen.addRenderableWidget(new EditBoxBuilder(closure).build()) }
@@ -124,7 +128,9 @@ class ScreenBuilder {
                  @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.EditBoxBuilder') Closure closure) {
         this.backingScreen.onInit << { ExtensibleScreen screen -> screen.addRenderableWidget(new EditBoxBuilder(message, closure).build()) }
     }
+    // endregion
 
+    // region plainTextButton
     void plainTextButton(@DelegatesTo(value = PlainTextButtonBuilder, strategy = DELEGATE_FIRST)
                          @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.PlainTextButtonBuilder') Closure closure) {
         this.backingScreen.onInit << { ExtensibleScreen screen -> screen.addRenderableWidget(new PlainTextButtonBuilder(closure).build()) }
@@ -141,6 +147,7 @@ class ScreenBuilder {
                          @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.PlainTextButtonBuilder') Closure closure) {
         this.backingScreen.onInit << { ExtensibleScreen screen -> screen.addRenderableWidget(new PlainTextButtonBuilder(message, closure).build()) }
     }
+    // endregion
 
     void onInit(@DelegatesTo(value = ExtensibleScreen, strategy = DELEGATE_FIRST)
                 @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.api.gui.ExtensibleScreen') Closure closure) {

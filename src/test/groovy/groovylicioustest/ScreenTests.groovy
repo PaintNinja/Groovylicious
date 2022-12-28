@@ -1,8 +1,10 @@
 package groovylicioustest
 
 import com.mojang.blaze3d.vertex.PoseStack
+
 import ga.ozli.minecraftmods.groovylicious.api.gui.ExtensibleScreen
-import groovy.time.Duration
+import ga.ozli.minecraftmods.groovylicious.api.gui.Position
+import ga.ozli.minecraftmods.groovylicious.api.gui.Size
 import groovy.time.TimeCategory
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -44,6 +46,7 @@ class ScreenTests {
     }
 
     @CompileDynamic // to allow for incremental testing - comment out to test all pages at once
+    @SuppressWarnings('unused') // called dynamically by getScreen(int index)
     private static class Pages {
         protected static final Screen page0 = new Screen(Component.literal("Page 0")) {
             int previousLabelYPos = 0
@@ -53,38 +56,53 @@ class ScreenTests {
                 super.init()
                 this.addRenderableWidget(CenteredStringWidget.builder {
                     message = 'Groovylicious Screen Test'
-                    size this.width, 9
-
+                    size {
+                        width = this.width
+                        height = 9
+                    }
                     previousLabelYPos = this.height / 3 as int
-                    position 0, previousLabelYPos
-                })
+                    position {
+                        x = 0
+                        y = previousLabelYPos
+                    }
+                }.build())
                 this.addRenderableWidget(CenteredStringWidget.builder {
                     message = 'Each page introduces new/different features for incremental testing'
-                    size this.width, 9
-
-                    position 0, previousLabelYPos + 19
-                })
+                    size {
+                        width = this.width
+                        height = 9
+                    }
+                    position {
+                        x = 0
+                        y = previousLabelYPos + 19
+                    }
+                }.build())
 
                 this.addRenderableWidget(Button.builder {
                     message = 'Previous page'
-                    size 100, 20
-                    x = 5
-                    y = this.height - 25
-                    onPress { Button button -> this.minecraft.setScreen(previousPage) }
-                })
+                    size = new Size(100, 20)
+                    position = new Position(5, this.height - 25)
+                    onPress { Button button -> Minecraft.getInstance().setScreen(previousPage) }
+                    active = false
+                }.build())
                 this.addRenderableWidget(CenteredStringWidget.builder {
                     message = 'Page 0'
-                    size this.width, 9
-                    x = 0
-                    y = this.height - 25 + 4
-                })
-                this.addRenderableWidget(Button.builder {
-                    message = 'Next page'
-                    size 100, 20
-                    x = this.width - 105
-                    y = this.height - 25
-                    onPress { Button button -> this.minecraft.setScreen(nextPage) }
-                })
+                    size {
+                        width = this.width
+                        height = 9
+                    }
+                    position {
+                        x = 0
+                        y = this.height - 25 + 4
+                    }
+                }.build())
+                this.addRenderableWidget(
+                        Button.builder(Component.literal('Next page'), (Button button) -> Minecraft.getInstance().setScreen(nextPage))
+                                .height(20)
+                                .width(100)
+                                .pos(this.width - 105, this.height - 25)
+                                .build()
+                )
             }
 
             @Override
@@ -95,7 +113,12 @@ class ScreenTests {
         }
 
         protected static Screen getPage1() {
-            return Screen.builder('Page 1') {
+            final builder = Screen.builder()
+                    .setTitle('Page 1')
+                    .setRenderBackground(true)
+
+            builder.tap {
+                title = 'Page 1'
                 centredString {
                     message = 'Screen builder test'
                     size screenWidth, 9
@@ -103,95 +126,133 @@ class ScreenTests {
                 }
                 button('Previous page') {
                     size 100, 20
-                    x = 5
-                    y = screenHeight - 25
+                    position 5, screenHeight - 25
                     onPress { Button button -> minecraft.setScreen(previousPage) }
                 }
                 centredString {
-                    message 'Page 1'
+                    message = 'Page 1'
                     size screenWidth, 9
-                    x = 0
-                    y = screenHeight - 25 + 4
+                    position x: 0, y: screenHeight - 25 + 4
                 }
                 button {
-                    text 'Next page'
+                    text = 'Next page'
                     size 100, 20
-                    x = screenWidth - 105
-                    y = screenHeight - 25
+                    position screenWidth - 105, screenHeight - 25
                     onPress { Button button -> minecraft.setScreen(nextPage) }
                 }
             }
+
+            return builder.build()
         }
 
         protected static Screen getPage2() {
-            return Screen.builder('Page 2') { screenBuilder ->
+            return Screen.builder { screenBuilder ->
+                title = 'Page 2'
                 centredString {
                     message = 'Screen builder with generics for page buttons'
-                    size screenWidth, 9
-                    position 0, screenHeight / 3 as int
+                    size {
+                        width = screenWidth
+                        height = 9
+                    }
+                    position {
+                        x = 0
+                        y = screenHeight / 3 as int
+                    }
                 }
-                centredString {
-                    message 'Page 2'
-                    size screenWidth, 9
-                    x = 0
-                    y = screenHeight - 25 + 4
+                centredString('Page 2') {
+                    size {
+                        width = screenWidth
+                        height = 9
+                    }
+                    position {
+                        x = 0
+                        y = screenHeight - 25 + 4
+                    }
                 }
                 onInit { ExtensibleScreen extensibleScreen ->
-                    final previousPageButton = Button.builder('Previous page') {
-                        size 100, 20
-                        position 5, screenBuilder.screenHeight - 25
+                    final previousPageButton = Button.builder {
+                        message = 'Previous page'
+                        size width: 100,
+                             height: 20
+                        position x: 5, y: screenHeight - 25
                         onPress { Button button -> screenBuilder.minecraft.setScreen(previousPage) }
-                    }
+                    }.build()
                     extensibleScreen.addRenderableWidget(previousPageButton)
                     extensibleScreen.addRenderableWidget(Button.builder {
-                        text 'Next page'
-                        size 100, 20
-                        x screenBuilder.screenWidth - 105
-                        y screenBuilder.screenHeight - 25
+                        text = 'Next page'
+                        size width: 100, height: 20
+                        position {
+                            x = screenBuilder.screenWidth - 105
+                            y = screenBuilder.screenHeight - 25
+                        }
                         onPress { Button button -> screenBuilder.minecraft.setScreen(nextPage) }
-                    })
+                    }.build())
                 }
-            }
+            }.build()
         }
 
         @Lazy
         protected static final List<Closure<Button>> buttons = [
             { int screenWidth, int screenHeight ->
-                Button.builder('Previous page') {
-                    size 100, 20
-                    position 5, screenHeight - 25
+                Button.builder {
+                    message = 'Previous page'
+                    size {
+                        width = 100
+                        height = 20
+                    }
+                    position {
+                        x = 5
+                        y = screenHeight - 25
+                    }
                     onPress { Button button -> Minecraft.instance.setScreen(previousPage) }
-                }
+                }.build()
             },
             { int screenWidth, int screenHeight ->
                 Button.builder {
-                    text 'Next page'
-                    size 100, 20
-                    x screenWidth - 105
-                    y screenHeight - 25
+                    text = 'Next page'
+                    size {
+                        width = 100
+                        height = 20
+                    }
+                    position {
+                        x = screenWidth - 105
+                        y = screenHeight - 25
+                    }
                     onPress { Button button -> Minecraft.instance.setScreen(nextPage) }
-                }
+                }.build()
             }
         ]
 
         protected static Screen getPage3() {
-            return Screen.builder('Page 3') { screenBuilder ->
+            return Screen.create('Page 3') { screenBuilder ->
+                title = 'Page 3'
                 centredString {
-                    message = 'Screen builder with closure-called generics for page buttons and editbox'
-                    size screenWidth, 9
-                    position 0, screenHeight / 3 as int
+                    message = 'Screen.create() with closure-called generics for page buttons and editbox'
+                    size {
+                        width = screenWidth
+                        height = 9
+                    }
+                    position {
+                        x = 0
+                        y = screenHeight / 3 as int
+                    }
                 }
                 centredString {
-                    message 'Page 3'
-                    size screenWidth, 9
-                    x = 0
-                    y = screenHeight - 25 + 4
+                    message = 'Page 3'
+                    size {
+                        width = screenWidth
+                        height = 9
+                    }
+                    position {
+                        x = 0
+                        y = screenHeight - 25 + 4
+                    }
                 }
                 editBox {
                     hint = 'Edit me!'
-                    tooltip "I'm a tooltip"
+                    tooltip = "I'm a tooltip"
                     use(TimeCategory) {
-                        tooltipDelay 2.seconds
+                        tooltipDelay = 2.seconds
                     }
                     bounds screenWidth / 2 as int - 50, screenHeight / 2 as int, 100, 20
                 }
@@ -208,39 +269,46 @@ class ScreenTests {
         }
 
         protected static Screen getPage4() {
-            return Screen.builder('Page 4') {
+            return Screen.create('Page 4') {
                 centredString {
                     message = 'Many different widgets'
-                    size screenWidth, 9
+                    size {
+                        width = screenWidth
+                        height = 9
+                    }
                     position 0, 5
                 }
 
                 editBox {
                     hint = 'EditBox'
-                    tooltip "I'm a tooltip"
-                    use(TimeCategory) {
-                        tooltipDelay 1.second
-                    }
-                    bounds 5, 20, 100, 20
+                    tooltip = "I'm a tooltip"
+                    tooltipDelay = 1000
+                    bounds x: 5, y: 20, width: 100, height: 20
                 }
 
                 plainTextButton {
-                    text 'PlainTextButton'
-                    size 100, 20
-                    position 5, 45
+                    text = 'PlainTextButton'
+                    size width: 100, height: 20
+                    position x: 5, y: 45
                 }
 
                 button {
-                    text 'Button'
-                    size 100, 20
-                    position 5, 70
+                    // note that the size isn't specified here, so it'll default to width: 200, height: 20
+                    text = 'Button'
+                    position = new Position(x: 5, y: 70)
                 }
 
                 centredString {
-                    message 'Page 4'
-                    size screenWidth, 9
-                    x = 0
-                    y = screenHeight - 25 + 4
+                    message = 'Page 4'
+                    size {
+                        width = screenWidth
+                        height = 9
+                    }
+                    position {
+                        x = 0
+                        y = screenHeight - 25 + 4
+                    }
+                    font = Minecraft.instance.font
                 }
                 onInit { ExtensibleScreen extensibleScreen ->
                     buttons.each { Closure<Button> button ->

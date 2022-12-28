@@ -16,20 +16,20 @@ class CentredStringBuilder extends AbstractWidgetBuilder implements FontTrait {
         this.tap(closure)
     }
 
-    CentredStringBuilder(final String message) {
-        this.message = message
-    }
-
     CentredStringBuilder(final Component message) {
         this.message = message
     }
 
-    CentredStringBuilder(final String message, @DelegatesTo(value = CentredStringBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
+    CentredStringBuilder(final String message) {
+        this.message = message
+    }
+
+    CentredStringBuilder(final Component message, @DelegatesTo(value = CentredStringBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
         this.message = message
         this.tap(closure)
     }
 
-    CentredStringBuilder(final Component message, @DelegatesTo(value = CentredStringBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
+    CentredStringBuilder(final String message, @DelegatesTo(value = CentredStringBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
         this.message = message
         this.tap(closure)
     }

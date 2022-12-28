@@ -4,6 +4,8 @@ import ga.ozli.minecraftmods.groovylicious.api.gui.ComponentUtils
 import ga.ozli.minecraftmods.groovylicious.dsl.traits.FontTrait
 import groovy.contracts.Requires
 import groovy.transform.CompileStatic
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
 import net.minecraft.client.gui.components.EditBox
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.Style
@@ -17,7 +19,9 @@ import java.util.function.Predicate
 import static groovy.lang.Closure.DELEGATE_FIRST
 
 // Todo: Colour support
+// Todo: Does TupleConstructor account for the super classes and traits?
 @CompileStatic
+@Builder(builderStrategy = SimpleStrategy)
 class EditBoxBuilder extends AbstractWidgetBuilder implements FontTrait {
     /*
      * Done:
@@ -58,11 +62,11 @@ class EditBoxBuilder extends AbstractWidgetBuilder implements FontTrait {
     BiFunction<String, Integer, FormattedCharSequence> formatter = (String text, Integer integer) -> FormattedCharSequence.forward(text, Style.EMPTY)
     @Nullable Consumer<String> responder = null
 
-    String initialValue = ""
-    int maxLength = 32
+    private String initialValue = ''
+    private int maxLength = 32
 
-    @Nullable String suggestion = null
-    @Nullable Component hint = null
+    private @Nullable String suggestion = null
+    private @Nullable Component hint = null
 
     EditBoxBuilder() {}
 
@@ -88,113 +92,85 @@ class EditBoxBuilder extends AbstractWidgetBuilder implements FontTrait {
         this.tap(closure)
     }
 
-    void canLoseFocus(final boolean canLoseFocus) {
-        this.@canLoseFocus = canLoseFocus
-    }
-
-    void editable(final boolean editable) {
-        this.@editable = editable
-    }
-
-    void visible(final boolean visible) {
-        this.visible = visible
-    }
-
-    void focused(final boolean focused) {
-        this.@focused = focused
-    }
-
-    void filter(final Predicate<String> filter) {
-        this.@filter = filter
-    }
-
-    void setFilter(final Predicate<String> filter) {
-        this.@filter = filter
-    }
-
-    void formatter(final BiFunction<String, Integer, FormattedCharSequence> formatter) {
-        this.@formatter = formatter
-    }
-
-    void setFormatter(final BiFunction<String, Integer, FormattedCharSequence> formatter) {
-        this.@formatter = formatter
-    }
-
-    void responder(final Consumer<String> responder) {
-        this.@responder = responder
-    }
-
-    void setResponder(final Consumer<String> responder) {
-        this.@responder = responder
-    }
-
-    void initialValue(final String initialValue) {
+    // region initialValue
+    EditBoxBuilder setInitialValue(final String initialValue) {
         this.@initialValue = initialValue
+        return this
     }
 
-    void initialValue(final Component initialValue) {
+    EditBoxBuilder setInitialValue(final Component initialValue) {
         this.@initialValue = initialValue.getString()
+        return this
     }
 
-    void setInitialValue(final String initialValue) {
-        this.@initialValue = initialValue
+    String getInitialValue() {
+        return this.@initialValue
     }
 
-    void setInitialValue(final Component initialValue) {
-        this.@initialValue = initialValue.getString()
-    }
-
-    void value(final String value) {
+    EditBoxBuilder setValue(final String value) {
         this.@initialValue = value
+        return this
     }
 
-    void value(final Component value) {
+    EditBoxBuilder setValue(final Component value) {
         this.@initialValue = value.getString()
+        return this
     }
 
-    void setValue(final String value) {
-        this.@initialValue = value
+    String getValue() {
+        return this.@initialValue
     }
+    // endregion
 
-    void setValue(final Component value) {
-        this.@initialValue = value.getString()
-    }
-
-    void maxLength(final int maxLength) {
+    // region maxLength
+    EditBoxBuilder setMaxLength(final int maxLength) {
         this.@maxLength = maxLength
+        return this
     }
 
-    void suggestion(@Nullable String suggestion) {
+    EditBoxBuilder setCharacterLimit(final int maxLength) {
+        this.@maxLength = maxLength
+        return this
+    }
+
+    int getMaxLength() {
+        return this.@maxLength
+    }
+    // endregion
+
+    // region suggestion
+    EditBoxBuilder setSuggestion(@Nullable final String suggestion) {
         this.@suggestion = suggestion
+        return this
     }
 
-    void suggestion(@Nullable Component suggestion) {
+    EditBoxBuilder setSuggestion(@Nullable final Component suggestion) {
         this.@suggestion = suggestion?.getString() ?: null
+        return this
     }
 
-    void setSuggestion(@Nullable String suggestion) {
-        this.@suggestion = suggestion
+    @Nullable
+    String getSuggestion() {
+        return this.@suggestion
     }
+    // endregion
 
-    void setSuggestion(@Nullable Component suggestion) {
-        this.@suggestion = suggestion?.getString() ?: null
-    }
-
-    void hint(@Nullable Component hint) {
+    // region hint
+    EditBoxBuilder setHint(@Nullable final Component hint) {
         this.@hint = hint
+        return this
     }
 
-    void hint(@Nullable String hint) {
+    EditBoxBuilder setHint(@Nullable final String hint) {
         this.@hint = hint ? ComponentUtils.stringToComponent(hint) : null
+        return this
     }
 
-    void setHint(@Nullable Component hint) {
-        this.@hint = hint
+    @Nullable
+    Component getHint() {
+        return this.@hint
     }
-
-    void setHint(@Nullable String hint) {
-        this.@hint = hint ? ComponentUtils.stringToComponent(hint) : null
-    }
+    // endregion
 
 //    @Requires({ font && position && size && message }) // ensure all required fields are set
     EditBox build() {
