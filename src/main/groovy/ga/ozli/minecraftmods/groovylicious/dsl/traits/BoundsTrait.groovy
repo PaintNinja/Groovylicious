@@ -5,10 +5,6 @@ import ga.ozli.minecraftmods.groovylicious.api.gui.Size
 import groovy.transform.CompileStatic
 import groovy.transform.NamedParam
 import groovy.transform.NamedParams
-import groovy.transform.stc.ClosureParams
-import groovy.transform.stc.SimpleType
-
-import static groovy.lang.Closure.DELEGATE_FIRST
 
 @CompileStatic
 trait BoundsTrait implements PositionTrait, SizeTrait {

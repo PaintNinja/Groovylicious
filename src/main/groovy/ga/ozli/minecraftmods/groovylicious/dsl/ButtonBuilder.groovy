@@ -7,17 +7,11 @@ import groovy.transform.stc.FromString
 import groovy.transform.stc.SimpleType
 import net.minecraft.client.gui.components.Button
 import net.minecraft.network.chat.Component
-import net.minecraft.network.chat.MutableComponent
-
-import java.util.function.Supplier
 
 import static groovy.lang.Closure.DELEGATE_FIRST
 
 @CompileStatic
-class ButtonBuilder extends AbstractWidgetBuilder {
-    private Button.OnPress onPress = (Button button) -> {}
-    private Button.CreateNarration createNarration = (Supplier<MutableComponent> supplier) -> supplier.get()
-
+class ButtonBuilder extends AbstractButtonBuilder {
     ButtonBuilder() {}
 
     ButtonBuilder(@DelegatesTo(value = ButtonBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
@@ -44,22 +38,14 @@ class ButtonBuilder extends AbstractWidgetBuilder {
 
     ButtonBuilder onPress(@ClosureParams(value = SimpleType, options = 'net.minecraft.client.gui.components.Button')
                     final Button.OnPress onPress) {
-        this.@onPress = onPress
+        this.onPress = onPress
         return this
-    }
-
-    Button.OnPress getOnPress() {
-        return this.@onPress
     }
 
     ButtonBuilder createNarration(@ClosureParams(value = FromString, options = 'java.util.function.Supplier<net.minecraft.network.chat.MutableComponent>')
                     final Button.CreateNarration createNarration) {
-        this.@createNarration = createNarration
+        this.createNarration = createNarration
         return this
-    }
-
-    Button.CreateNarration getCreateNarration() {
-        return this.@createNarration
     }
 
 //    @Requires({ position && size && message && onPress && tooltip && createNarration }) // ensure all required fields are set

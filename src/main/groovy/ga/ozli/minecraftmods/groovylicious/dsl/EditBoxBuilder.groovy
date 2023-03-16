@@ -128,12 +128,16 @@ class EditBoxBuilder extends AbstractWidgetBuilder implements FontTrait {
         return this
     }
 
+    int getMaxLength() {
+        return this.@maxLength
+    }
+
     EditBoxBuilder setCharacterLimit(final int maxLength) {
         this.@maxLength = maxLength
         return this
     }
 
-    int getMaxLength() {
+    int getCharacterLimit() {
         return this.@maxLength
     }
     // endregion

@@ -5,6 +5,7 @@ import ga.ozli.minecraftmods.groovylicious.dsl.CentredStringBuilder
 import ga.ozli.minecraftmods.groovylicious.dsl.EditBoxBuilder
 import ga.ozli.minecraftmods.groovylicious.dsl.PlainTextButtonBuilder
 import ga.ozli.minecraftmods.groovylicious.dsl.ScreenBuilder
+import ga.ozli.minecraftmods.groovylicious.dsl.SpacerWidgetBuilder
 import ga.ozli.minecraftmods.groovylicious.dsl.TooltipBuilder
 import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
@@ -14,6 +15,7 @@ import net.minecraft.client.gui.components.Button
 import net.minecraft.client.gui.components.CenteredStringWidget
 import net.minecraft.client.gui.components.EditBox
 import net.minecraft.client.gui.components.PlainTextButton
+import net.minecraft.client.gui.components.SpacerWidget
 import net.minecraft.client.gui.components.Tooltip
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
@@ -189,6 +191,24 @@ class StaticGuiExtension {
                           @DelegatesTo(value = TooltipBuilder, strategy = DELEGATE_FIRST)
                           @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.TooltipBuilder') Closure closure) {
         return new TooltipBuilder(closure).build()
+    }
+    // endregion
+
+    // region SpacerWidget
+    static SpacerWidgetBuilder builder(SpacerWidget self) {
+        return new SpacerWidgetBuilder()
+    }
+
+    static SpacerWidgetBuilder builder(SpacerWidget self,
+                                       @DelegatesTo(value = SpacerWidgetBuilder, strategy = DELEGATE_FIRST)
+                                       @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.SpacerWidgetBuilder') Closure closure) {
+        return new SpacerWidgetBuilder(closure)
+    }
+
+    static SpacerWidget create(SpacerWidget self,
+                               @DelegatesTo(value = SpacerWidgetBuilder, strategy = DELEGATE_FIRST)
+                               @ClosureParams(value = SimpleType, options = 'ga.ozli.minecraftmods.groovylicious.dsl.SpacerWidgetBuilder') Closure closure) {
+        return new SpacerWidgetBuilder(closure).build()
     }
     // endregion
 }

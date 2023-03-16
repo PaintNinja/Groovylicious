@@ -4,11 +4,7 @@ import ga.ozli.minecraftmods.groovylicious.api.gui.Position
 import groovy.transform.CompileStatic
 import groovy.transform.NamedParam
 import groovy.transform.NamedParams
-import groovy.transform.NamedVariant
-import groovy.transform.builder.Builder
-import groovy.transform.builder.SimpleStrategy
 import groovy.transform.stc.ClosureParams
-import groovy.transform.stc.FirstParam
 import groovy.transform.stc.SimpleType
 
 import static groovy.lang.Closure.DELEGATE_FIRST
