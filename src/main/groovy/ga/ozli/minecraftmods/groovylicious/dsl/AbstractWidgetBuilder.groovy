@@ -1,6 +1,6 @@
 package ga.ozli.minecraftmods.groovylicious.dsl
 
-import ga.ozli.minecraftmods.groovylicious.api.gui.ComponentUtils
+import ga.ozli.minecraftmods.groovylicious.api.GeneralUtils
 import ga.ozli.minecraftmods.groovylicious.dsl.traits.BoundsTrait
 import ga.ozli.minecraftmods.groovylicious.dsl.traits.MessageTrait
 import groovy.time.TimeDuration
@@ -50,7 +50,7 @@ abstract class AbstractWidgetBuilder implements BoundsTrait, MessageTrait {
     }
 
     void setTooltip(final String message) {
-        this.@tooltip = Tooltip.create(ComponentUtils.stringToComponent(message))
+        this.@tooltip = Tooltip.create(GeneralUtils.stringToComponent(message))
     }
 
     void tooltip(@DelegatesTo(value = Tooltip, strategy = DELEGATE_FIRST) final Closure closure) {

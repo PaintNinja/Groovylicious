@@ -9,4 +9,6 @@ enum Alignment {
     LEFT,
     CENTRE,
     RIGHT
+
+    Alignment() {}
 }

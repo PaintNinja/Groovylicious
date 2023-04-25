@@ -1,6 +1,5 @@
 package ga.ozli.minecraftmods.groovylicious.extension
 
-
 import groovy.transform.CompileStatic
 import groovy.transform.stc.POJO
 import net.minecraft.client.Minecraft

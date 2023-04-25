@@ -20,7 +20,7 @@ import static io.github.groovymc.cgl.api.extension.EnvironmentExtension.Side
 @EnvironmentExtension(Side.CLIENT)
 class ButtonBuilderExtension {
     Button.Builder height(int height) {
-        this.@height = height
+        //this.@height = height
         return this
     }
 }

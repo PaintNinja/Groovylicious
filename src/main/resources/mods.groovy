@@ -11,13 +11,13 @@ ModsDotGroovy.make {
 
         displayUrl = 'https://www.curseforge.com/minecraft/mc-mods/Groovylicious'
         description = 'Delicious syntax sugar with the power of Groovy!'
-        authors = ['Paint_Ninja', 'Matyrobbrt']
+        authors = ['Paint_Ninja', 'Matyrobbrt', 'lukebemish']
 
         logoFile = 'logo.png'
 
         dependencies {
-            forge = "[44,)"
-            minecraft = '[1.19.3]'
+            forge = "[45,)"
+            minecraft = '[1.19.4]'
         }
     }
 }

@@ -1,8 +1,7 @@
 package ga.ozli.minecraftmods.groovylicious.dsl
 
-import ga.ozli.minecraftmods.groovylicious.api.gui.ComponentUtils
+import ga.ozli.minecraftmods.groovylicious.api.GeneralUtils
 import ga.ozli.minecraftmods.groovylicious.dsl.traits.FontTrait
-import groovy.contracts.Requires
 import groovy.transform.CompileStatic
 import groovy.transform.builder.Builder
 import groovy.transform.builder.SimpleStrategy
@@ -79,7 +78,7 @@ class EditBoxBuilder extends AbstractWidgetBuilder implements FontTrait {
     }
 
     EditBoxBuilder(final String message) {
-        this.message = ComponentUtils.stringToComponent(message)
+        this.message = GeneralUtils.stringToComponent(message)
     }
 
     EditBoxBuilder(final Component message, @DelegatesTo(value = EditBoxBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
@@ -88,7 +87,7 @@ class EditBoxBuilder extends AbstractWidgetBuilder implements FontTrait {
     }
 
     EditBoxBuilder(final String message, @DelegatesTo(value = EditBoxBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
-        this.message = ComponentUtils.stringToComponent(message)
+        this.message = GeneralUtils.stringToComponent(message)
         this.tap(closure)
     }
 
@@ -166,7 +165,7 @@ class EditBoxBuilder extends AbstractWidgetBuilder implements FontTrait {
     }
 
     EditBoxBuilder setHint(@Nullable final String hint) {
-        this.@hint = hint ? ComponentUtils.stringToComponent(hint) : null
+        this.@hint = hint ? GeneralUtils.stringToComponent(hint) : null
         return this
     }
 
@@ -184,7 +183,7 @@ class EditBoxBuilder extends AbstractWidgetBuilder implements FontTrait {
         editBox.visible = visible
         editBox.canLoseFocus = canLoseFocus
         editBox.editable = editable
-        editBox.focus = focused
+        editBox.focused = focused
         editBox.filter = filter
         editBox.formatter = formatter
         editBox.hint = hint

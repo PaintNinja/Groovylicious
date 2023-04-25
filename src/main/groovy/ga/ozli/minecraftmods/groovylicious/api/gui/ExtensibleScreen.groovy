@@ -1,6 +1,7 @@
 package ga.ozli.minecraftmods.groovylicious.api.gui
 
 import com.mojang.blaze3d.vertex.PoseStack
+import ga.ozli.minecraftmods.groovylicious.api.GeneralUtils
 import groovy.transform.CompileStatic
 import net.minecraft.client.gui.components.Renderable
 import net.minecraft.client.gui.components.events.GuiEventListener
@@ -21,7 +22,7 @@ class ExtensibleScreen extends Screen {
     }
 
     ExtensibleScreen(final String title) {
-        super(ComponentUtils.stringToComponent(title))
+        super(GeneralUtils.stringToComponent(title))
     }
 
     void renderBackground(final boolean renderBackground) {

@@ -1,16 +1,12 @@
 package ga.ozli.minecraftmods.groovylicious.dsl.traits
 
-import ga.ozli.minecraftmods.groovylicious.api.gui.ComponentUtils
+import ga.ozli.minecraftmods.groovylicious.api.GeneralUtils
 import groovy.transform.CompileStatic
-import groovy.transform.builder.Builder
-import groovy.transform.builder.SimpleStrategy
 import net.minecraft.network.chat.Component
-
-import javax.annotation.Nonnull
 
 @CompileStatic
 trait MessageTrait {
-    private Component message = ComponentUtils.PLACEHOLDER_COMPONENT
+    private Component message = Component.empty()
 
     void setText(final Component text) {
         this.@message = text
@@ -28,7 +24,7 @@ trait MessageTrait {
      * @param text
      */
     void setText(final String text) {
-        this.@message = ComponentUtils.stringToComponent(text)
+        this.@message = GeneralUtils.stringToComponent(text)
     }
 
     Component getText() {
@@ -51,7 +47,7 @@ trait MessageTrait {
      * @param text
      */
     void setMessage(final String message) {
-        this.@message = ComponentUtils.stringToComponent(message)
+        this.@message = GeneralUtils.stringToComponent(message)
     }
 
     Component getMessage() {

@@ -6,16 +6,15 @@ plugins {
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '5.1.+'
     id 'org.parchmentmc.librarian.forgegradle' version '1.+'
-    id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
     id 'io.github.groovymc.modsdotgroovy' version '1.1.2'
 }
 
 modsDotGroovy {
-    dslVersion = '1.2.1'
+    dslVersion = '1.3.0'
     automaticConfiguration = false
 }
 
-version = '1.19.3-0.3.0-SNAPSHOT'
+version = '1.19.4-0.4.0-SNAPSHOT'
 group = 'ga.ozli.minecraftmods.groovylicious'
 archivesBaseName = 'groovylicious'
 
@@ -25,7 +24,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 
 minecraft {
-    mappings channel: 'parchment', version: '2022.12.18-1.19.3'
+    mappings channel: 'parchment', version: '1.19.3-2023.03.12-1.19.4'
 
     //accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
@@ -105,29 +104,42 @@ repositories {
     maven {
         name 'Modding Inquisition Snapshots'
         url 'https://maven.moddinginquisition.org/snapshots'
+        content {
+            includeGroup 'com.matyrobbrt'
+            includeGroup 'com.matyrobbrt'
+            includeGroup 'io.github.groovymc'
+        }
     }
     maven {
         name 'Modding Inquisition Releases'
         url 'https://maven.moddinginquisition.org/releases'
+        content {
+            includeGroup 'com.matyrobbrt'
+            includeGroup 'com.matyrobbrt'
+            includeGroup 'io.github.groovymc'
+        }
     }
     mavenLocal()
 }
 
 dependencies {
     // Forge
-    minecraft 'net.minecraftforge:forge:1.19.3-44.0.41'
+    minecraft 'net.minecraftforge:forge:1.19.4-45.0.43'
 
     // Matyrobbrt's GroovyModLoader
-    compileOnly 'com.matyrobbrt.gml:gml:1.3.0'
-    runtimeOnly('com.matyrobbrt.gml:gml:1.3.0:all') {
+    compileOnly 'com.matyrobbrt.gml:gml:3.1.3'
+    runtimeOnly('com.matyrobbrt.gml:gml:3.1.3:all') {
         exclude module: 'transform'
     }
-    transformCompileOnly 'com.matyrobbrt.gml:gml:1.3.0'
-    transformCompileOnly 'com.matyrobbrt.gml:transform:1.3.0'
+    transformCompileOnly 'com.matyrobbrt.gml:gml:3.1.3'
+    transformCompileOnly 'com.matyrobbrt.gml:transform:3.1.3'
 
     // GroovyMC's CommonGroovyLibrary
-    compileOnly 'io.github.groovymc.cgl:cgl-1.19.3-forge:0.2.1'
-    transformCompileOnly 'io.github.groovymc.cgl:cgl-1.19.3-forge:0.2.1'
+    compileOnly 'io.github.groovymc.cgl:cgl-1.19.4-forge:0.2.5'
+    transformCompileOnly 'io.github.groovymc.cgl:cgl-1.19.4-forge:0.2.5'
+
+    // Matyrobbrt's EnhancedGroovy for better IDE support
+    transformCompileOnly 'com.matyrobbrt.enhancedgroovy:dsl:0.2.0'
 }
 
 processResources {
@@ -203,7 +215,7 @@ tasks.create('modsDotGroovyToToml', ConvertToTomlTask) {
 build.dependsOn 'modsDotGroovyToToml'
 
 tasks.withType(GroovyCompile).configureEach {
-    groovyOptions.fork = true
+    options.incremental = true
     groovyOptions.encoding = 'UTF-8'
     groovyOptions.optimizationOptions.indy = true
     groovyOptions.optimizationOptions.groovydoc = true

@@ -1,6 +1,6 @@
 package ga.ozli.minecraftmods.groovylicious.dsl
 
-import ga.ozli.minecraftmods.groovylicious.api.gui.ComponentUtils
+import ga.ozli.minecraftmods.groovylicious.api.GeneralUtils
 import ga.ozli.minecraftmods.groovylicious.dsl.traits.FontTrait
 import groovy.transform.CompileStatic
 import groovy.transform.builder.Builder
@@ -57,7 +57,7 @@ class MultiLineEditBoxBuilder extends AbstractScrollWidgetBuilder implements Fon
     }
 
     MultiLineEditBoxBuilder setPlaceholder(final String placeholder) {
-        this.@placeholder = ComponentUtils.stringToComponent(placeholder)
+        this.@placeholder = GeneralUtils.stringToComponent(placeholder)
         return this
     }
 

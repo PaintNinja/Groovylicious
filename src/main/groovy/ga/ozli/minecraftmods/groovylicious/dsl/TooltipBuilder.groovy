@@ -1,6 +1,6 @@
 package ga.ozli.minecraftmods.groovylicious.dsl
 
-import ga.ozli.minecraftmods.groovylicious.api.gui.ComponentUtils
+import ga.ozli.minecraftmods.groovylicious.api.GeneralUtils
 import groovy.transform.Canonical
 import groovy.transform.CompileStatic
 import net.minecraft.client.gui.components.Tooltip
@@ -23,7 +23,7 @@ class TooltipBuilder {
     }
 
     TooltipBuilder(final String message) {
-        this.@message = ComponentUtils.stringToComponent(message)
+        this.@message = GeneralUtils.stringToComponent(message)
     }
 
     TooltipBuilder(final Component message, @Nullable final Component narration) {
@@ -32,17 +32,17 @@ class TooltipBuilder {
     }
 
     TooltipBuilder(final String message, final String narration) {
-        this.@message = ComponentUtils.stringToComponent(message)
-        this.@narration = ComponentUtils.stringToComponent(narration)
+        this.@message = GeneralUtils.stringToComponent(message)
+        this.@narration = GeneralUtils.stringToComponent(narration)
     }
 
     TooltipBuilder(final Component message, final String narration) {
         this.@message = message
-        this.@narration = ComponentUtils.stringToComponent(narration)
+        this.@narration = GeneralUtils.stringToComponent(narration)
     }
 
     TooltipBuilder(final String message, @Nullable final Component narration) {
-        this.@message = ComponentUtils.stringToComponent(message)
+        this.@message = GeneralUtils.stringToComponent(message)
         this.@narration = narration
     }
 
@@ -56,7 +56,7 @@ class TooltipBuilder {
     }
 
     TooltipBuilder setMessage(final String message) {
-        this.@message = ComponentUtils.stringToComponent(message)
+        this.@message = GeneralUtils.stringToComponent(message)
         return this
     }
 
@@ -66,7 +66,7 @@ class TooltipBuilder {
     }
 
     TooltipBuilder setNarration(final String narration) {
-        this.@narration = ComponentUtils.stringToComponent(narration)
+        this.@narration = GeneralUtils.stringToComponent(narration)
         return this
     }
 

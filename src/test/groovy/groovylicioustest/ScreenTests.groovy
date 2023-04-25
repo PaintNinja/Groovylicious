@@ -11,8 +11,9 @@ import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.components.Button
-import net.minecraft.client.gui.components.CenteredStringWidget
+import net.minecraft.client.gui.components.StringWidget
 import net.minecraft.client.gui.screens.Screen
+import net.minecraft.client.gui.screens.TitleScreen
 import net.minecraft.network.chat.Component
 
 @PackageScope
@@ -54,7 +55,7 @@ class ScreenTests {
             @Override
             protected void init() {
                 super.init()
-                this.addRenderableWidget(CenteredStringWidget.builder {
+                this.addRenderableWidget(StringWidget.builder {
                     message = 'Groovylicious Screen Test'
                     size {
                         width = this.width
@@ -66,7 +67,7 @@ class ScreenTests {
                         y = previousLabelYPos
                     }
                 }.build())
-                this.addRenderableWidget(CenteredStringWidget.builder {
+                this.addRenderableWidget(StringWidget.builder {
                     message = 'Each page introduces new/different features for incremental testing'
                     size {
                         width = this.width
@@ -79,13 +80,23 @@ class ScreenTests {
                 }.build())
 
                 this.addRenderableWidget(Button.builder {
+                    message = 'Main menu'
+                    position {
+                        x = 5
+                        y = 30
+                    }
+                    //width = 80
+                    onPress { Button button -> Minecraft.getInstance().setScreen(new TitleScreen()) }
+                }.build())
+
+                this.addRenderableWidget(Button.builder {
                     message = 'Previous page'
                     size = new Size(100, 20)
                     position = new Position(5, this.height - 25)
                     onPress { Button button -> Minecraft.getInstance().setScreen(previousPage) }
                     active = false
                 }.build())
-                this.addRenderableWidget(CenteredStringWidget.builder {
+                this.addRenderableWidget(StringWidget.builder {
                     message = 'Page 0'
                     size {
                         width = this.width
@@ -98,8 +109,7 @@ class ScreenTests {
                 }.build())
                 this.addRenderableWidget(
                         Button.builder(Component.literal('Next page'), (Button button) -> Minecraft.getInstance().setScreen(nextPage))
-                                .height(20)
-                                .width(100)
+                                .size(100, 20)
                                 .pos(this.width - 105, this.height - 25)
                                 .build()
                 )
@@ -119,7 +129,7 @@ class ScreenTests {
 
             builder.tap {
                 title = 'Page 1'
-                centredString {
+                stringWidget {
                     message = 'Screen builder test'
                     size screenWidth, 9
                     position 0, screenHeight / 3 as int
@@ -129,7 +139,7 @@ class ScreenTests {
                     position 5, screenHeight - 25
                     onPress { Button button -> minecraft.setScreen(previousPage) }
                 }
-                centredString {
+                stringWidget {
                     message = 'Page 1'
                     size screenWidth, 9
                     position x: 0, y: screenHeight - 25 + 4
@@ -148,7 +158,7 @@ class ScreenTests {
         protected static Screen getPage2() {
             return Screen.builder { screenBuilder ->
                 title = 'Page 2'
-                centredString {
+                stringWidget {
                     message = 'Screen builder with generics for page buttons'
                     size {
                         width = screenWidth
@@ -159,7 +169,7 @@ class ScreenTests {
                         y = screenHeight / 3 as int
                     }
                 }
-                centredString('Page 2') {
+                stringWidget('Page 2') {
                     size {
                         width = screenWidth
                         height = 9
@@ -226,7 +236,7 @@ class ScreenTests {
         protected static Screen getPage3() {
             return Screen.create('Page 3') { screenBuilder ->
                 title = 'Page 3'
-                centredString {
+                stringWidget {
                     message = 'Screen.create() with closure-called generics for page buttons and editbox'
                     size {
                         width = screenWidth
@@ -237,7 +247,7 @@ class ScreenTests {
                         y = screenHeight / 3 as int
                     }
                 }
-                centredString {
+                stringWidget {
                     message = 'Page 3'
                     size {
                         width = screenWidth
@@ -270,7 +280,7 @@ class ScreenTests {
 
         protected static Screen getPage4() {
             return Screen.create('Page 4') {
-                centredString {
+                stringWidget {
                     message = 'Many different widgets'
                     size {
                         width = screenWidth
@@ -298,7 +308,7 @@ class ScreenTests {
                     position = new Position(x: 5, y: 70)
                 }
 
-                centredString {
+                stringWidget {
                     message = 'Page 4'
                     size {
                         width = screenWidth

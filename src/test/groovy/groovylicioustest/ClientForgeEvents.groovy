@@ -1,16 +1,26 @@
 package groovylicioustest
 
 import com.matyrobbrt.gml.bus.EventBusSubscriber
+import com.matyrobbrt.gml.bus.type.ModBus
 import com.matyrobbrt.gml.util.Environment
 import com.mojang.blaze3d.vertex.PoseStack
+import ga.ozli.minecraftmods.groovylicious.dsl.ScreenBuilder
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import groovy.transform.TypeChecked
 import net.minecraft.client.gui.components.Button
 import net.minecraft.client.gui.components.EditBox
+import net.minecraft.client.gui.screens.OptionsScreen
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.TitleScreen
 import net.minecraft.network.chat.CommonComponents
+import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.Items
 import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.client.event.ScreenEvent
+import net.minecraftforge.event.CreativeModeTabEvent
 import net.minecraftforge.eventbus.api.SubscribeEvent
 
 @CompileStatic
@@ -19,7 +29,7 @@ class ClientForgeEvents {
 
     @SubscribeEvent
     static void onScreenOpen(final ScreenEvent.Opening event) {
-        if (event.newScreen instanceof TitleScreen)
+        if (event.newScreen instanceof TitleScreen && event.currentScreen === null)
             event.newScreen = ScreenTests.testScreenDSL()
     }
 

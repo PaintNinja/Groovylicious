@@ -1,6 +1,6 @@
 package ga.ozli.minecraftmods.groovylicious.dsl
 
-import ga.ozli.minecraftmods.groovylicious.api.gui.ComponentUtils
+import ga.ozli.minecraftmods.groovylicious.api.GeneralUtils
 import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FromString
@@ -23,7 +23,7 @@ class ButtonBuilder extends AbstractButtonBuilder {
     }
 
     ButtonBuilder(final String message) {
-        this.message = ComponentUtils.stringToComponent(message)
+        this.message = GeneralUtils.stringToComponent(message)
     }
 
     ButtonBuilder(final Component message, @DelegatesTo(value = ButtonBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
@@ -32,7 +32,7 @@ class ButtonBuilder extends AbstractButtonBuilder {
     }
 
     ButtonBuilder(final String message, @DelegatesTo(value = ButtonBuilder, strategy = DELEGATE_FIRST) final Closure closure) {
-        this.message = ComponentUtils.stringToComponent(message)
+        this.message = GeneralUtils.stringToComponent(message)
         this.tap(closure)
     }
 

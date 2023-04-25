@@ -14,15 +14,10 @@ import org.slf4j.LoggerFactory
 @CompileStatic
 class Groovylicious {
     @PackageScope static final String MOD_ID = 'groovylicious'
-    static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID)
+    private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID)
 
     Groovylicious() {
         LOGGER.info "${MOD_ID.capitalize()} starting"
         LOGGER.info SV(GroovySystem.version)
-
-//        // Setup String->ResourceLocation type inference
-//        SoundEvent.metaClass.constructor << { String path ->
-//            return new SoundEvent(new ResourceLocation('example', path))
-//        }
     }
 }
