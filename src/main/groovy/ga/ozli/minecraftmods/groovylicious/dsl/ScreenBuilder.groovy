@@ -95,8 +95,7 @@ class ScreenBuilder implements WidgetContainer {
         return this.backingScreen
     }
 
-    <T extends GuiEventListener & Renderable & NarratableEntry> T addWidgetPrettyPlease(T widget) {
-        this.backingScreen.onInit << { ExtensibleScreen screen -> screen.addRenderableWidget(widget) }
-        return (T) widget
+    <T extends GuiEventListener & Renderable & NarratableEntry> void addRenderableWidget(T widget) {
+        onInit { ExtensibleScreen screen -> screen.addRenderableWidget(widget) }
     }
 }

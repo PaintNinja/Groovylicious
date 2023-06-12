@@ -22,6 +22,7 @@ import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.client.event.ScreenEvent
 import net.minecraftforge.event.CreativeModeTabEvent
 import net.minecraftforge.eventbus.api.SubscribeEvent
+import static groovylicioustest.GroovyliciousTest.log
 
 @CompileStatic
 @EventBusSubscriber(dist = Dist.CLIENT, environment = Environment.DEV)
@@ -29,9 +30,46 @@ class ClientForgeEvents {
 
     @SubscribeEvent
     static void onScreenOpen(final ScreenEvent.Opening event) {
-        if (event.newScreen instanceof TitleScreen && event.currentScreen === null)
+        if (event.newScreen instanceof TitleScreen /*&& event.currentScreen === null*/)
+//            event.newScreen = new TestScreen()
             event.newScreen = ScreenTests.testScreenDSL()
     }
+
+    static class TestScreen extends Screen {
+        TestScreen() {
+            super(Component.literal("Test screen"))
+        }
+
+        @Override
+        void render(PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
+            this.renderBackground(poseStack)
+            super.render(poseStack, mouseX, mouseY, partialTicks)
+        }
+
+        @Override
+        protected void init() {
+            super.init()
+
+            // Vanilla
+//            this.addRenderableWidget(
+//                    Button.builder(Component.literal("Button"), (Button button) -> log.info('Button pressed!'))
+//                            .pos(this.width - 105, this.height - 25)
+//                            .width(100)
+//                            .build()
+//            )
+
+            this.addRenderableWidget(
+                    Button.builder {
+                        message = 'Button'
+                        position this.width - 105, this.height - 25
+                        size width: 100, height: 20
+                        width = 100
+                        onPress = { Button button -> log.info('Button pressed!') }
+                    }.build()
+            )
+        }
+    }
+
 
 //    static Screen testScreenDSL() {
 //

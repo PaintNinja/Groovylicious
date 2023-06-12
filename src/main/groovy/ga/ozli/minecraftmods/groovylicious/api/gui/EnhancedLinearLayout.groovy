@@ -6,7 +6,7 @@ import net.minecraft.client.gui.layouts.LayoutElement
 import net.minecraft.client.gui.layouts.LinearLayout
 
 @CompileStatic
-class EnhancedLinearLayout extends LinearLayout implements WidgetContainer {
+class EnhancedLinearLayout extends LinearLayout/* implements WidgetContainer*/ {
     EnhancedLinearLayout(final int x, final int y, final Orientation orientation) {
         super(x, y, orientation)
     }

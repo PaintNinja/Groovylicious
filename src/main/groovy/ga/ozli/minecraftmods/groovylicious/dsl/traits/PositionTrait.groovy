@@ -67,4 +67,20 @@ trait PositionTrait {
     Position getPosition() {
         return this.@position
     }
+
+    void setX(final int x) {
+        this.@position.x = x
+    }
+
+    int getX() {
+        return this.@position.x
+    }
+
+    void setY(final int y) {
+        this.@position.y = y
+    }
+
+    int getY() {
+        return this.@position.y
+    }
 }

@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack
 import ga.ozli.minecraftmods.groovylicious.api.gui.ExtensibleScreen
 import ga.ozli.minecraftmods.groovylicious.api.gui.Position
 import ga.ozli.minecraftmods.groovylicious.api.gui.Size
+import ga.ozli.minecraftmods.groovylicious.dsl.StringWidgetBuilder
 import groovy.time.TimeCategory
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -54,7 +55,6 @@ class ScreenTests {
 
             @Override
             protected void init() {
-                super.init()
                 this.addRenderableWidget(StringWidget.builder {
                     message = 'Groovylicious Screen Test'
                     size {
@@ -99,11 +99,11 @@ class ScreenTests {
                 this.addRenderableWidget(StringWidget.builder {
                     message = 'Page 0'
                     size {
-                        width = this.width
+                        width = 80
                         height = 9
                     }
                     position {
-                        x = 0
+                        x = this.width / 2 - 40
                         y = this.height - 25 + 4
                     }
                 }.build())
@@ -129,27 +129,51 @@ class ScreenTests {
 
             builder.tap {
                 title = 'Page 1'
-                stringWidget {
-                    message = 'Screen builder test'
-                    size screenWidth, 9
-                    position 0, screenHeight / 3 as int
+//                stringWidget {
+//                    message = 'Screen builder test'
+//                    size screenWidth, 9
+//                    position 0, screenHeight / 3 as int
+//                }
+                onInit { extensibleScreen ->
+                    extensibleScreen.addRenderableWidget(
+                            Button.builder {
+                                message = 'Previous page'
+                                size 100, 20
+                                position 5, screenHeight - 25
+                                onPress { Button button -> minecraft.setScreen(previousPage) }
+                            }.build()
+                    )
                 }
-                button('Previous page') {
-                    size 100, 20
-                    position 5, screenHeight - 25
-                    onPress { Button button -> minecraft.setScreen(previousPage) }
-                }
+//                onInit { extensibleScreen ->
+//                    extensibleScreen.addRenderableWidget(
+//                            new StringWidgetBuilder().tap {
+//                                message = 'Page 1'
+//                                size 80, 9
+//                                position x: screenWidth / 2 - 40 as int, y: screenHeight - 25 + 4
+//                            }.build()
+//                    )
+//                }
+//                button('Previous page') {
+//                    size 100, 20
+//                    position 5, screenHeight - 25
+//                    onPress { Button button -> minecraft.setScreen(previousPage) }
+//                }
                 stringWidget {
                     message = 'Page 1'
-                    size screenWidth, 9
+                    size 80, 9
                     position x: 0, y: screenHeight - 25 + 4
                 }
-                button {
-                    text = 'Next page'
-                    size 100, 20
-                    position screenWidth - 105, screenHeight - 25
-                    onPress { Button button -> minecraft.setScreen(nextPage) }
-                }
+
+                it.addRenderableWidget(
+                        Button.builder {
+                            message = 'Next page'
+                            size 100, 20
+                            position screenWidth - 105, screenHeight - 25
+                            onPress { Button button -> minecraft.setScreen(nextPage) }
+                        }.build()
+                )
+
+                return it
             }
 
             return builder.build()
@@ -171,7 +195,7 @@ class ScreenTests {
                 }
                 stringWidget('Page 2') {
                     size {
-                        width = screenWidth
+                        width = 80
                         height = 9
                     }
                     position {
@@ -250,7 +274,7 @@ class ScreenTests {
                 stringWidget {
                     message = 'Page 3'
                     size {
-                        width = screenWidth
+                        width = 80
                         height = 9
                     }
                     position {
@@ -311,7 +335,7 @@ class ScreenTests {
                 stringWidget {
                     message = 'Page 4'
                     size {
-                        width = screenWidth
+                        width = 80
                         height = 9
                     }
                     position {

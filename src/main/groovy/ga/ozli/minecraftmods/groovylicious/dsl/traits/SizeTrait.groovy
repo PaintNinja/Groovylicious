@@ -67,4 +67,20 @@ trait SizeTrait {
     Size getSize() {
         return this.size
     }
+
+    void setWidth(final int width) {
+        this.size.width = width
+    }
+
+    int getWidth() {
+        return this.size.width
+    }
+
+    void setHeight(final int height) {
+        this.size.height = height
+    }
+
+    int getHeight() {
+        return this.size.height
+    }
 }

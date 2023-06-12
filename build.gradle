@@ -104,27 +104,17 @@ repositories {
     maven {
         name 'Modding Inquisition Snapshots'
         url 'https://maven.moddinginquisition.org/snapshots'
-        content {
-            includeGroup 'com.matyrobbrt'
-            includeGroup 'com.matyrobbrt'
-            includeGroup 'io.github.groovymc'
-        }
     }
     maven {
         name 'Modding Inquisition Releases'
         url 'https://maven.moddinginquisition.org/releases'
-        content {
-            includeGroup 'com.matyrobbrt'
-            includeGroup 'com.matyrobbrt'
-            includeGroup 'io.github.groovymc'
-        }
     }
     mavenLocal()
 }
 
 dependencies {
     // Forge
-    minecraft 'net.minecraftforge:forge:1.19.4-45.0.43'
+    minecraft 'net.minecraftforge:forge:1.19.4-45.0.49'
 
     // Matyrobbrt's GroovyModLoader
     compileOnly 'com.matyrobbrt.gml:gml:3.1.3'

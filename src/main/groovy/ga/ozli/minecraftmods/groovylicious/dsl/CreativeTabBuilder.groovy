@@ -170,7 +170,7 @@ class CreativeTabBuilder implements AlignmentTrait {
 
     CreativeModeTab build() {
         builder.title(title)
-        if (icon != null) builder.icon(() -> icon)
+        if (icon !== null) builder.icon(() -> icon)
         if (!canScroll) builder.noScrollBar()
         if (!showTitle) builder.hideTitle()
         switch (alignment) {

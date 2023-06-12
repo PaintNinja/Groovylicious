@@ -1,6 +1,6 @@
 ModsDotGroovy.make {
     modLoader = 'gml'
-    loaderVersion = '[1,)'
+    loaderVersion = '[3,)'
 
     license = 'MIT'
     issueTrackerUrl = 'https://github.com/PaintNinja/Groovylicious/issues'
